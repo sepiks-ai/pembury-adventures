@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>The Wiggle Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Andika:wght@400;700&display=swap">
+<style>
+/* Layout: a toy on a craft table — the stage (a picture frame) on top, chunky crayon-coloured buttons below. One committed bright look. */
+:root {
+  --table: #f4e3c3;     /* the craft table */
+  --paper: #fffaf0;
+  --ink: #2a2a35;
+  --tomato: #ef5a3c;
+  --sun: #ffc531;
+  --sky: #3aa0e8;
+  --grass: #4cb050;
+  --plum: #8a4fc8;
+  --display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --body: "Andika", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--table) repeating-linear-gradient(90deg, rgba(160,110,60,.06) 0 2px, transparent 2px 46px);
+  color: var(--ink); font-family: var(--body);
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 5vw, 44px); margin: 0; line-height: 1; letter-spacing: .01em; }
+h1 span:nth-child(1) { color: var(--tomato); } h1 span:nth-child(2) { color: var(--sky); } h1 span:nth-child(3) { color: var(--grass); }
+.frame { background: #fff; border: 4px solid var(--ink); border-radius: 18px; overflow: hidden; box-shadow: 6px 6px 0 var(--ink); position: relative; }
+canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: grab; }
+.hint { position: absolute; left: 12px; bottom: 10px; right: 12px; font: 700 15px var(--body); color: var(--ink); background: rgba(255,250,240,.88); border-radius: 10px; padding: 6px 10px; width: fit-content; max-width: calc(100% - 24px); pointer-events: none; }
+.rec { position: absolute; top: 12px; right: 12px; background: var(--tomato); color: #fff; font: 700 16px var(--body); padding: 6px 12px; border-radius: 999px; }
+.panel { background: var(--paper); border: 3px solid var(--ink); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.label { font: 700 13px var(--body); text-transform: uppercase; letter-spacing: .1em; color: #6b6458; margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.effects { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+button, .filebtn {
+  font: 700 18px var(--body); color: var(--ink); background: #fff; border: 3px solid var(--ink); border-radius: 14px;
+  padding: 10px 14px; min-height: 52px; cursor: pointer; box-shadow: 3px 3px 0 var(--ink); touch-action: manipulation;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .06s, box-shadow .06s;
+}
+button:active, .filebtn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+button:focus-visible, .filebtn:focus-within { outline: 4px solid var(--sky); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--sun); }
+.effects button { background: var(--c, #fff); }
+.effects button[aria-pressed="true"] { outline: 4px solid var(--ink); outline-offset: -8px; }
+.big { font-family: var(--display); font-weight: 400; font-size: 24px; background: var(--tomato); color: #fff; padding: 12px 22px; }
+.filebtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.small { font-size: 16px; min-height: 44px; padding: 8px 12px; }
+.top { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* the cut-out step */
+dialog { border: 4px solid var(--ink); border-radius: 18px; padding: 16px; background: var(--paper); max-width: min(720px, calc(100vw - 32px)); width: 100%; box-shadow: 6px 6px 0 var(--ink); }
+dialog::backdrop { background: rgba(42,42,53,.55); }
+dialog h2 { font-family: var(--display); font-weight: 400; margin: 0 0 8px; font-size: 28px; }
+.check { background: repeating-conic-gradient(#e6e0d4 0 25%, #fff 0 50%) 0 0 / 24px 24px; border-radius: 12px; border: 3px solid var(--ink); display: grid; place-items: center; min-height: 220px; max-height: 50vh; overflow: hidden; }
+.check canvas { max-width: 100%; max-height: 48vh; display: block; }
+.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font: 700 16px var(--body); margin: 12px 0; }
+.slider input { width: 100%; accent-color: var(--tomato); height: 32px; }
+.result video { width: 100%; border-radius: 12px; border: 3px solid var(--ink); background: #000; }
+@media (max-width: 560px) { .effects { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } button { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>The</span> <span>Wiggle</span> <span>Machine</span></h1>
+    <div class="top">
+      <label class="filebtn big" for="file">Add a drawing<input id="file" type="file" accept="image/*"></label>
+      <button id="sound" class="small" aria-pressed="true" type="button">Sound on</button>
+    </div>
+  </header>
+
+  <div class="frame">
+    <canvas id="stage" width="1280" height="720" aria-label="Your drawings, animated"></canvas>
+    <div class="hint" id="hint">Take a photo of a drawing, or choose one from your pictures. Drag your drawings around, and tap them to make them jump.</div>
+    <div class="rec" id="recBadge" hidden>Recording…</div>
+  </div>
+
+  <section class="panel" aria-label="What should they do?">
+    <p class="label">What should they do?</p>
+    <div class="effects" id="effects"></div>
+  </section>
+
+  <section class="panel">
+    <p class="label">Where are they?</p>
+    <div class="row" id="scenes"></div>
+    <p class="label">Extras</p>
+    <div class="row">
+      <button id="eyes" type="button" aria-pressed="false">Googly eyes</button>
+      <button id="record" type="button">Make a video</button>
+      <button id="remove" type="button">Take one away</button>
+    </div>
+  </section>
+</div>
+
+<dialog id="cut">
+  <h2>Cutting it out</h2>
+  <div class="check"><canvas id="preview"></canvas></div>
+  <div class="slider"><span>Rub out less</span><input id="tol" type="range" min="0.06" max="0.4" step="0.01" value="0.17" aria-label="How much paper to rub out"><span>Rub out more</span></div>
+  <div class="row">
+    <button id="rotate" type="button">Turn it</button>
+    <button id="keepPaper" type="button" aria-pressed="false">Keep the paper</button>
+    <button id="cancelCut" type="button">Cancel</button>
+    <button id="useIt" class="big" type="button">Use it!</button>
+  </div>
+</dialog>
+
+<dialog id="result">
+  <h2>Your video</h2>
+  <div class="result"><video id="vid" controls playsinline loop></video></div>
+  <div class="row" style="margin-top:12px">
+    <button id="saveVid" class="big" type="button">Save it</button>
+    <button id="closeVid" type="button">Close</button>
+  </div>
+  <p class="label" id="saveNote" style="margin-top:10px"></p>
+</dialog>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const cv = $("stage"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const TAU = Math.PI * 2;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const ease = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+let canFilter = "filter" in ctx;
+
+// ------------------------------------------------------------------ sound
+let actx = null, master = null, recDest = null, soundOn = true;
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain(); master.gain.value = 0.5; master.connect(actx.destination);
+      if (actx.createMediaStreamDestination) { recDest = actx.createMediaStreamDestination(); master.connect(recDest); }
+    } catch (e) { return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return soundOn ? actx : null;
+}
+function tone(type, f0, f1, dur, vol = 0.3, delay = 0) {
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + delay;
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur, f0, f1, vol = 0.25) {
+  const a = audio(); if (!a) return;
+  const b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime;
+  f.type = "bandpass"; f.Q.value = 1.2; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.buffer = b; s.connect(f).connect(g).connect(master); s.start(t);
+}
+const SFX = {
+  boing: () => { tone("sine", 180, 620, 0.18, 0.35); tone("sine", 620, 260, 0.25, 0.25, 0.16); },
+  pop: () => { tone("square", 900, 120, 0.12, 0.15); noise(0.25, 2000, 300, 0.3); },
+  whoosh: () => noise(1.2, 300, 3000, 0.35),
+  wobble: () => { for (let k = 0; k < 4; k++) tone("sine", 300 + k * 40, 200, 0.15, 0.2, k * 0.12); },
+  sparkle: () => { [1047, 1319, 1568, 2093].forEach((f, k) => tone("triangle", f, f, 0.3, 0.12, k * 0.07)); },
+  stomp: () => { tone("sine", 90, 40, 0.4, 0.5); noise(0.3, 200, 80, 0.3); },
+  slide: () => tone("sawtooth", 700, 120, 0.8, 0.08),
+  blip: () => tone("triangle", 660, 880, 0.08, 0.15),
+};
+$("sound").onclick = () => { soundOn = !soundOn; $("sound").setAttribute("aria-pressed", String(soundOn)); $("sound").textContent = soundOn ? "Sound on" : "Sound off"; if (soundOn) SFX.blip(); };
+
+// ------------------------------------------------------------------ cutting the drawing out of the paper
+// 1. even out the lighting: estimate the paper's colour across the photo from the brightest pixels in each patch
+// 2. mark as ink anything darker or more colourful than the paper there
+// 3. rub out paper that is connected to the edge (paper enclosed by lines, like the white of an eye, stays)
+// 4. remove specks, whiten the remaining paper, crop, and add a white sticker border
+let source = null, rotation = 0;
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { res(im); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+    im.onerror = rej; im.src = url;
+  });
+}
+function toCanvas(img, maxDim, rot) {
+  const s = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.round(img.width * s), h = Math.round(img.height * s);
+  const c = document.createElement("canvas"), r = rot % 4;
+  c.width = r % 2 ? h : w; c.height = r % 2 ? w : h;
+  const g = c.getContext("2d");
+  g.translate(c.width / 2, c.height / 2); g.rotate(r * Math.PI / 2); g.drawImage(img, -w / 2, -h / 2, w, h);
+  return c;
+}
+function cutOut(img, tol, keepPaper) {
+  const c = toCanvas(img, 900, rotation), w = c.width, h = c.height, g = c.getContext("2d", { willReadFrequently: true });
+  const id = g.getImageData(0, 0, w, h), d = id.data, N = w * h;
+  // paper estimate per cell
+  const S = Math.max(8, Math.round(Math.max(w, h) / 28)), gw = Math.ceil(w / S), gh = Math.ceil(h / S);
+  const bg = new Float32Array(gw * gh * 3);
+  for (let cy = 0; cy < gh; cy++) for (let cx = 0; cx < gw; cx++) {
+    const lums = [];
+    for (let y = cy * S; y < Math.min(h, cy * S + S); y += 2) for (let x = cx * S; x < Math.min(w, cx * S + S); x += 2) {
+      const i = (y * w + x) * 4; lums.push([d[i] + d[i + 1] + d[i + 2], i]);
+    }
+    lums.sort((a, b) => b[0] - a[0]);
+    const top = lums.slice(Math.floor(lums.length * 0.03), Math.max(2, Math.floor(lums.length * 0.25)));
+    let r = 0, gg = 0, b = 0; for (const [, i] of top) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; }
+    const k = (cy * gw + cx) * 3; bg[k] = r / top.length; bg[k + 1] = gg / top.length; bg[k + 2] = b / top.length;
+  }
+  // trust a patch as paper only if its brightest pixels look like paper (pale and nearly grey, like the edges);
+  // patches full of crayon get their paper colour from their neighbours instead
+  const lumOf = (k) => (bg[k] + bg[k + 1] + bg[k + 2]) / 3, chromaOf = (k) => Math.max(bg[k], bg[k + 1], bg[k + 2]) - Math.min(bg[k], bg[k + 1], bg[k + 2]);
+  const edge = [];
+  for (let cy = 0; cy < gh; cy++) for (let cx = 0; cx < gw; cx++) if (cx === 0 || cy === 0 || cx === gw - 1 || cy === gh - 1) edge.push(lumOf((cy * gw + cx) * 3));
+  edge.sort((a, b) => a - b);
+  const paperLum = edge[Math.floor(edge.length / 2)];
+  const known = new Uint8Array(gw * gh);
+  for (let q = 0; q < gw * gh; q++) known[q] = lumOf(q * 3) > paperLum * 0.72 && chromaOf(q * 3) < Math.max(28, paperLum * 0.14) ? 1 : 0;
+  if (!known.some((x) => x)) known.fill(1);
+  for (let pass = 0; pass < gw + gh; pass++) {
+    let changed = false;
+    const next = known.slice();
+    for (let cy = 0; cy < gh; cy++) for (let cx = 0; cx < gw; cx++) {
+      const q = cy * gw + cx; if (known[q]) continue;
+      let r = 0, gg = 0, b = 0, n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const x = cx + dx, y = cy + dy; if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
+        const o = y * gw + x; if (!known[o]) continue; r += bg[o * 3]; gg += bg[o * 3 + 1]; b += bg[o * 3 + 2]; n++;
+      }
+      if (n) { bg[q * 3] = r / n; bg[q * 3 + 1] = gg / n; bg[q * 3 + 2] = b / n; next[q] = 1; changed = true; }
+    }
+    known.set(next); if (!changed) break;
+  }
+  // smooth the paper map
+  const bg2 = new Float32Array(bg.length);
+  for (let cy = 0; cy < gh; cy++) for (let cx = 0; cx < gw; cx++) for (let ch = 0; ch < 3; ch++) {
+    let sum = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const x = clamp(cx + dx, 0, gw - 1), y = clamp(cy + dy, 0, gh - 1); sum += bg[(y * gw + x) * 3 + ch];
+    }
+    bg2[(cy * gw + cx) * 3 + ch] = sum / 9;
+  }
+  const ink = new Uint8Array(N), out = new Uint8ClampedArray(d.length);
+  for (let y = 0; y < h; y++) {
+    const fy = clamp(y / S - 0.5, 0, gh - 1), y0 = Math.floor(fy), y1 = Math.min(gh - 1, y0 + 1), ty = fy - y0;
+    for (let x = 0; x < w; x++) {
+      const fx = clamp(x / S - 0.5, 0, gw - 1), x0 = Math.floor(fx), x1 = Math.min(gw - 1, x0 + 1), tx = fx - x0;
+      const i = (y * w + x) * 4, p = [];
+      for (let ch = 0; ch < 3; ch++) {
+        const a = bg2[(y0 * gw + x0) * 3 + ch] * (1 - tx) + bg2[(y0 * gw + x1) * 3 + ch] * tx;
+        const b = bg2[(y1 * gw + x0) * 3 + ch] * (1 - tx) + bg2[(y1 * gw + x1) * 3 + ch] * tx;
+        p.push(Math.max(30, a * (1 - ty) + b * ty));
+      }
+      const r = d[i] / p[0], gg = d[i + 1] / p[1], b = d[i + 2] / p[2];        // 1 = paper
+      const lum = (r + gg + b) / 3, chroma = Math.max(r, gg, b) - Math.min(r, gg, b);
+      const inkness = Math.max(1 - lum, chroma * 1.1);
+      ink[y * w + x] = inkness > tol ? 1 : 0;
+      out[i] = clamp(r * 255, 0, 255); out[i + 1] = clamp(gg * 255, 0, 255); out[i + 2] = clamp(b * 255, 0, 255); out[i + 3] = 255;
+    }
+  }
+  let mask = new Uint8Array(N).fill(1);
+  if (!keepPaper) {
+    // flood the paper from the edges
+    const outside = new Uint8Array(N), stack = new Int32Array(N); let sp = 0;
+    const push = (k) => { if (!outside[k] && !ink[k]) { outside[k] = 1; stack[sp++] = k; } };
+    for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+    while (sp) {
+      const k = stack[--sp], x = k % w, y = (k / w) | 0;
+      if (x > 0) push(k - 1); if (x < w - 1) push(k + 1); if (y > 0) push(k - w); if (y < h - 1) push(k + w);
+    }
+    for (let k = 0; k < N; k++) mask[k] = outside[k] ? 0 : 1;
+    // remove specks smaller than 0.15% of the picture
+    const lab = new Int32Array(N), minSize = Math.max(30, N * 0.0015); let next = 1;
+    for (let k0 = 0; k0 < N; k0++) {
+      if (!mask[k0] || lab[k0]) continue;
+      const comp = []; sp = 0; stack[sp++] = k0; lab[k0] = next;
+      while (sp) {
+        const k = stack[--sp], x = k % w, y = (k / w) | 0; comp.push(k);
+        const nb = [x > 0 ? k - 1 : -1, x < w - 1 ? k + 1 : -1, y > 0 ? k - w : -1, y < h - 1 ? k + w : -1];
+        for (const q of nb) if (q >= 0 && mask[q] && !lab[q]) { lab[q] = next; stack[sp++] = q; }
+      }
+      if (comp.length < minSize) for (const k of comp) mask[k] = 0;
+      next++;
+    }
+    let count = 0; for (let k = 0; k < N; k++) count += mask[k];
+    if (count < N * 0.004 || count > N * 0.97) mask.fill(1);               // nothing sensible found: keep it all
+  }
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (mask[y * w + x]) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  for (let k = 0; k < N; k++) out[k * 4 + 3] = mask[k] ? 255 : 0;
+  const full = document.createElement("canvas"); full.width = w; full.height = h;
+  full.getContext("2d").putImageData(new ImageData(out, w, h), 0, 0);
+  // crop and add a sticker border
+  const B = keepPaper ? 0 : Math.round(Math.max(w, h) / 110) + 3, cw = maxX - minX + 1 + 2 * B, ch = maxY - minY + 1 + 2 * B;
+  const st = document.createElement("canvas"); st.width = cw; st.height = ch;
+  const sg = st.getContext("2d");
+  if (B) {
+    const sil = document.createElement("canvas"); sil.width = cw; sil.height = ch;
+    const lg = sil.getContext("2d"); lg.drawImage(full, -minX + B, -minY + B); lg.globalCompositeOperation = "source-in"; lg.fillStyle = "#fff"; lg.fillRect(0, 0, cw, ch);
+    for (let a = 0; a < 16; a++) sg.drawImage(sil, Math.cos(a / 16 * TAU) * B * 0.8, Math.sin(a / 16 * TAU) * B * 0.8);
+  }
+  sg.drawImage(full, -minX + B, -minY + B);
+  return st;
+}
+
+// ------------------------------------------------------------------ a demo drawing, so the stage is never empty
+function demoDrawing(kind) {
+  const c = document.createElement("canvas"); c.width = 600; c.height = 600;
+  const g = c.getContext("2d");
+  g.fillStyle = "#f7f3ea"; g.fillRect(0, 0, 600, 600);
+  g.lineCap = "round"; g.lineJoin = "round";
+  const wob = (pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x + Math.random() * 3, y + Math.random() * 3) : g.moveTo(x, y))); };
+  if (kind === 0) {
+    // a fluffy monster
+    const body = []; for (let a = 0; a <= TAU + 0.01; a += 0.12) body.push([300 + Math.cos(a) * (150 + 14 * Math.sin(a * 9)), 320 + Math.sin(a) * (130 + 14 * Math.sin(a * 9))]);
+    g.fillStyle = "#58b7e8"; wob(body); g.fill();
+    for (let k = 0; k < 120; k++) { g.strokeStyle = "rgba(40,120,190,.35)"; g.lineWidth = 3; const x = 180 + Math.random() * 240, y = 220 + Math.random() * 200; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 18, y - 10); g.stroke(); }
+    g.strokeStyle = "#1d2a44"; g.lineWidth = 7; wob(body); g.stroke();
+    g.fillStyle = "#fff"; g.beginPath(); g.ellipse(250, 280, 34, 40, 0, 0, TAU); g.ellipse(350, 280, 34, 40, 0, 0, TAU); g.fill(); g.stroke();
+    g.fillStyle = "#1d2a44"; g.beginPath(); g.arc(258, 288, 13, 0, TAU); g.arc(342, 288, 13, 0, TAU); g.fill();
+    g.fillStyle = "#e4473a"; wob([[240, 360], [300, 410], [360, 360], [240, 360]]); g.fill(); g.stroke();
+    g.fillStyle = "#fff"; g.fillRect(268, 360, 16, 16); g.fillRect(316, 360, 16, 16);
+    g.strokeStyle = "#1d2a44"; for (const x of [230, 370]) { wob([[x, 440], [x - 10, 520], [x + 20, 520]]); g.stroke(); }
+    g.fillStyle = "#ffc531"; wob([[230, 200], [250, 140], [280, 190], [300, 130], [320, 190], [350, 140], [370, 200], [230, 200]]); g.fill(); g.stroke();
+  } else {
+    // a cat, in felt tip
+    g.fillStyle = "#f2a13b"; g.strokeStyle = "#3a2410"; g.lineWidth = 7;
+    g.beginPath(); g.ellipse(300, 380, 130, 110, 0, 0, TAU); g.fill(); g.stroke();
+    g.beginPath(); g.arc(300, 230, 90, 0, TAU); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(225, 185); g.lineTo(230, 110); g.lineTo(280, 150); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(320, 150); g.lineTo(370, 110); g.lineTo(375, 185); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = "#7a4a1a"; for (const [x, y] of [[250, 360], [340, 400], [300, 450], [220, 420], [370, 340]]) { g.beginPath(); g.ellipse(x, y, 18, 11, 0.4, 0, TAU); g.fill(); }
+    g.fillStyle = "#5fbf6a"; g.beginPath(); g.ellipse(268, 225, 14, 18, 0, 0, TAU); g.ellipse(332, 225, 14, 18, 0, 0, TAU); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(290, 262); g.lineTo(310, 262); g.lineTo(300, 274); g.closePath(); g.fillStyle = "#e46b7a"; g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(420, 400); g.quadraticCurveTo(520, 380, 480, 280); g.lineWidth = 22; g.strokeStyle = "#3a2410"; g.stroke(); g.lineWidth = 12; g.strokeStyle = "#f2a13b"; g.stroke();
+  }
+  return c;
+}
+
+// ------------------------------------------------------------------ the creatures
+const creatures = [];
+let effect = "jelly", scene = "forest", eyesMode = false, selected = null;
+function addCreature(sprite) {
+  if (creatures.length >= 6) creatures.shift();
+  const n = creatures.length;
+  const c = { img: sprite, ph: Math.random() * TAU, homeX: 0, homeY: 0, x: 0, y: 0, rot: 0, sx: 1, sy: 1, alpha: 1, hue: 0, eyes: [], jump: 0, wx: null, dir: 1, mine: null, last: null };
+  creatures.push(c);
+  layout();
+  return c;
+}
+function size(c) {
+  const k = creatures.length, max = k <= 1 ? 0.62 : k === 2 ? 0.52 : k <= 4 ? 0.42 : 0.34;
+  const s = (H * max) / Math.max(c.img.width, c.img.height);
+  return [c.img.width * s, c.img.height * s];
+}
+function layout() {
+  const k = creatures.length;
+  creatures.forEach((c, i) => { c.homeX = W * (i + 1) / (k + 1); c.homeY = H * 0.6; c.wx = null; });
+}
+
+// effects: each sets the creature's pose for time t, and may bend it (warp) or draw it its own way
+const EFFECTS = {
+  jelly: { label: "Jelly", c: "#ffd6e7", sfx: "wobble",
+    pose: (c, t) => { const s = Math.sin(t * 7 + c.ph); c.sx = 1 + 0.07 * s; c.sy = 1 - 0.07 * s; },
+    warp: (u, v, t, c) => [0.08 * Math.sin(t * 6 + v * 4 + c.ph) * (1 - v), 0.03 * Math.sin(t * 7 + u * 5 + c.ph) * (1 - v)] },
+  dance: { label: "Dance", c: "#d6f0ff", sfx: "boing",
+    pose: (c, t) => { const b = Math.abs(Math.sin(t * 3.4 + c.ph)); c.y = c.homeY - b * 70; c.rot = 0.28 * Math.sin(t * 3.4 + c.ph); const land = Math.max(0, 1 - b * 6); c.sx = 1 + 0.18 * land; c.sy = 1 - 0.18 * land; },
+    warp: (u, v, t, c) => [0.07 * Math.sin(t * 6.8 + c.ph) * Math.abs(u - 0.5) * 2 * (1 - v), 0] },
+  walk: { label: "Go for a walk", c: "#e0f5d6", sfx: "blip",
+    pose: (c, t, dt) => {
+      const [w] = size(c); if (c.wx === null) c.wx = c.homeX;
+      c.wx += c.dir * 170 * dt;
+      if (c.wx > W - w / 2) { c.wx = W - w / 2; c.dir = -1; } if (c.wx < w / 2) { c.wx = w / 2; c.dir = 1; }
+      c.x = c.wx; c.y = c.homeY - Math.abs(Math.sin(t * 9 + c.ph)) * 28; c.rot = 0.08 * Math.sin(t * 9 + c.ph); c.sx = c.dir;
+    } },
+  spin: { label: "Spin", c: "#fff1c2", sfx: "slide",
+    pose: (c, t) => { c.rot = t * 5 + c.ph; const s = 1 + 0.25 * Math.sin(t * 2.5); c.sx = s; c.sy = s; } },
+  explode: { label: "Explode!", c: "#ffd2c4", sfx: "pop", cycle: 4.2, draw: drawExplode,
+    pose: (c, t) => { const p = (t % 4.2); if (p < 0.5) { c.x = c.homeX + (Math.random() - 0.5) * 14 * p * 2; c.y = c.homeY + (Math.random() - 0.5) * 14 * p * 2; } } },
+  melt: { label: "Melt", c: "#d9f2ef", sfx: "slide",
+    warp: (u, v, t, c) => {
+      const p = (t % 5) / 5, m = p < 0.15 ? 0 : p < 0.55 ? ease((p - 0.15) / 0.4) : p < 0.7 ? 1 : 1 - ease((p - 0.7) / 0.3);
+      const drip = 0.25 + 0.35 * (0.5 + 0.5 * Math.sin(u * 23 + c.ph) * Math.sin(u * 7));
+      return [0.15 * m * (u - 0.5) * v, m * (drip * v * v * 0.9 + 0.25 * v)];
+    } },
+  rocket: { label: "Blast off", c: "#e2dcff", sfx: "whoosh", cycle: 4,
+    pose: (c, t) => {
+      const p = t % 4;
+      if (p < 1) { c.x = c.homeX + (Math.random() - 0.5) * 10; c.y = c.homeY + (Math.random() - 0.5) * 6; }
+      else if (p < 2) { const k = ease(p - 1); c.y = c.homeY - k * (H + 400); c.x = c.homeX; }
+      else if (p < 2.6) { c.y = H + 600; }
+      else { const k = ease(clamp((p - 2.6) / 1.2, 0, 1)); c.y = H + 400 - k * (H + 400 - c.homeY); c.rot = (1 - k) * 0.3; }
+      if (p > 0.6 && p < 2.2) for (let k = 0; k < 3; k++) particles.push({ x: c.x + (Math.random() - 0.5) * 40, y: c.y + size(c)[1] / 2, vx: (Math.random() - 0.5) * 80, vy: 200 + Math.random() * 150, life: 0.6, col: ["#ffc531", "#ef5a3c", "#fff1c2"][k] });
+    } },
+  flag: { label: "Wave like a flag", c: "#ffe2c6", sfx: "wobble",
+    warp: (u, v, t, c) => [0.02 * Math.sin(t * 5 - u * 7 + c.ph) * u, 0.1 * Math.sin(t * 5 - u * 7 + c.ph) * u] },
+  giant: { label: "Giant", c: "#fbd3d3", sfx: "stomp",
+    pose: (c, t) => {
+      const p = (t % 5) / 5, s = p < 0.4 ? 1 + 1.6 * ease(p / 0.4) : p < 0.6 ? 2.6 : p < 0.8 ? 2.6 - 2.3 * ease((p - 0.6) / 0.2) : 0.3 + 0.7 * ease((p - 0.8) / 0.2);
+      c.sx = s; c.sy = s; c.y = c.homeY - (s - 1) * 60;
+      if (p > 0.4 && p < 0.6) shake = 8;
+    } },
+  clones: { label: "Clones", c: "#d8f3d8", sfx: "sparkle", draw: drawClones },
+  kaleido: { label: "Kaleidoscope", c: "#f0dcff", sfx: "sparkle", draw: drawKaleido },
+  twist: { label: "Twister", c: "#cfeefe", sfx: "whoosh",
+    warp: (u, v, t, c) => {
+      const x = u - 0.5, y = v - 0.5, r = Math.hypot(x, y), a = Math.sin(t * 2 + c.ph) * 3.2 * Math.max(0, 0.75 - r);
+      return [x * Math.cos(a) - y * Math.sin(a) - x, x * Math.sin(a) + y * Math.cos(a) - y];
+    } },
+  disco: { label: "Disco", c: "#ffe9a8", sfx: "sparkle",
+    pose: (c, t) => { const b = Math.abs(Math.sin(t * 4 + c.ph)); c.y = c.homeY - b * 40; c.rot = 0.2 * Math.sin(t * 4 + c.ph); c.hue = (t * 220) % 360; } },
+  party: { label: "Party!", c: "#ffffff", sfx: "sparkle" },
+};
+const PARTY = ["jelly", "dance", "walk", "spin", "explode", "melt", "rocket", "flag", "giant", "twist", "disco"];
+function effectFor(c, t) {
+  if (effect !== "party") return EFFECTS[effect];
+  const k = Math.floor((t + c.ph * 3) / 5), name = PARTY[(k * 7 + creatures.indexOf(c) * 3) % PARTY.length];
+  if (c.mine !== name) { c.mine = name; c.wx = null; }
+  return EFFECTS[name];
+}
+
+// ------------------------------------------------------------------ drawing: a bent picture is drawn as a mesh of triangles
+const GRID = 9;
+function project(c, u, v, warp, t) {
+  const [w, h] = size(c);
+  let dx = 0, dy = 0;
+  if (warp) [dx, dy] = warp(u, v, t, c);
+  const lx = (u - 0.5 + dx) * w * c.sx, ly = (v - 0.5 + dy) * h * c.sy;
+  const cs = Math.cos(c.rot), sn = Math.sin(c.rot);
+  return [c.x + lx * cs - ly * sn, c.y + lx * sn + ly * cs];
+}
+function tri(img, s0, s1, s2, d0, d1, d2) {
+  // grow the target triangle a little so neighbours overlap with no hairline gaps
+  const cx = (d0[0] + d1[0] + d2[0]) / 3, cy = (d0[1] + d1[1] + d2[1]) / 3;
+  const grow = (p) => { const dx = p[0] - cx, dy = p[1] - cy, l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * 0.9, p[1] + dy / l * 0.9]; };
+  const [a, b, c] = [grow(d0), grow(d1), grow(d2)];
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); ctx.clip();
+  const x1 = s1[0] - s0[0], y1 = s1[1] - s0[1], x2 = s2[0] - s0[0], y2 = s2[1] - s0[1];
+  const u1 = d1[0] - d0[0], v1 = d1[1] - d0[1], u2 = d2[0] - d0[0], v2 = d2[1] - d0[1];
+  const det = x1 * y2 - x2 * y1;
+  if (Math.abs(det) > 1e-6) {
+    const A = (u1 * y2 - u2 * y1) / det, C = (u2 * x1 - u1 * x2) / det, B = (v1 * y2 - v2 * y1) / det, D = (v2 * x1 - v1 * x2) / det;
+    ctx.setTransform(A, B, C, D, d0[0] - A * s0[0] - C * s0[1], d0[1] - B * s0[0] - D * s0[1]);
+    ctx.drawImage(img, 0, 0);
+  }
+  ctx.restore();
+}
+function drawCreature(c, t, warp) {
+  if (canFilter && c.hue) ctx.filter = `hue-rotate(${c.hue}deg) saturate(1.6)`;
+  ctx.globalAlpha = c.alpha;
+  if (!warp) {
+    const [w, h] = size(c);
+    ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot); ctx.scale(c.sx, c.sy); ctx.drawImage(c.img, -w / 2, -h / 2, w, h); ctx.restore();
+  } else {
+    const iw = c.img.width, ih = c.img.height, P = [];
+    for (let j = 0; j <= GRID; j++) { P.push([]); for (let i = 0; i <= GRID; i++) P[j].push(project(c, i / GRID, j / GRID, warp, t)); }
+    for (let j = 0; j < GRID; j++) for (let i = 0; i < GRID; i++) {
+      const s = (a, b) => [a / GRID * iw, b / GRID * ih];
+      tri(c.img, s(i, j), s(i + 1, j), s(i, j + 1), P[j][i], P[j][i + 1], P[j + 1][i]);
+      tri(c.img, s(i + 1, j), s(i + 1, j + 1), s(i, j + 1), P[j][i + 1], P[j + 1][i + 1], P[j + 1][i]);
+    }
+  }
+  ctx.globalAlpha = 1; if (canFilter) ctx.filter = "none";
+}
+function drawExplode(c, t) {
+  const p = t % 4.2, [w, h] = size(c), n = 6, iw = c.img.width, ih = c.img.height;
+  if (p < 0.5 || p > 3.4) return drawCreature(c, t, null);
+  if (!c.bits) c.bits = [...Array(n * n)].map(() => ({ a: Math.random() * TAU, s: 0.6 + Math.random(), r: (Math.random() - 0.5) * 14 }));
+  if (p < 0.6 && !c.popped) { c.popped = true; SFX.pop(); }
+  if (p > 3.4) c.popped = false;
+  const k = p < 1.9 ? ease((p - 0.5) / 1.4) : 1 - ease((p - 1.9) / 1.5);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const b = c.bits[j * n + i], cu = (i + 0.5) / n - 0.5, cv = (j + 0.5) / n - 0.5;
+    const dirx = cu * 2 + Math.cos(b.a) * 0.6, diry = cv * 2 + Math.sin(b.a) * 0.6 - 0.4;
+    const x = c.x + cu * w + dirx * k * 520 * b.s, y = c.y + cv * h + diry * k * 420 * b.s + k * k * 120;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(b.r * k);
+    ctx.drawImage(c.img, i / n * iw, j / n * ih, iw / n, ih / n, -w / n / 2 - 0.5, -h / n / 2 - 0.5, w / n + 1, h / n + 1);
+    ctx.restore();
+  }
+  c.popped = p < 3.4;
+}
+function drawClones(c, t) {
+  const idx = creatures.indexOf(c), k = 5, [w] = size(c);
+  for (let q = 0; q < k; q++) {
+    const save = { x: c.x, y: c.y, rot: c.rot, sx: c.sx, sy: c.sy };
+    const ph = t * 3.4 + q * 0.7 + idx;
+    c.x = clamp(c.homeX + (q - 2) * w * 0.55, 0, W); c.y = c.homeY - Math.abs(Math.sin(ph)) * 50 + (q % 2) * 20;
+    c.rot = 0.25 * Math.sin(ph); const s = q === 2 ? 1 : 0.7; c.sx = s * (q < 2 ? -1 : 1); c.sy = s;
+    drawCreature(c, t, null);
+    Object.assign(c, save);
+  }
+}
+function drawKaleido(c, t) {
+  const idx = creatures.indexOf(c), n = 8, [w, h] = size(c), R = 150 + idx * 70;
+  for (let q = 0; q < n; q++) {
+    const a = q / n * TAU + t * 0.6 * (idx % 2 ? -1 : 1);
+    ctx.save(); ctx.translate(W / 2 + Math.cos(a) * R, H / 2 + Math.sin(a) * R); ctx.rotate(a + Math.PI / 2); ctx.scale(q % 2 ? -0.5 : 0.5, 0.5);
+    if (canFilter) ctx.filter = `hue-rotate(${q * 45 + t * 60}deg)`;
+    ctx.drawImage(c.img, -w / 2, -h / 2, w, h); ctx.restore(); if (canFilter) ctx.filter = "none";
+  }
+}
+
+// ------------------------------------------------------------------ googly eyes
+function addEye(c, u, v) { c.eyes.push({ u, v, r: 0.09, px: 0, py: 0, vx: 0, vy: 0, last: null }); SFX.blip(); }
+function drawEyes(c, t, warp, dt) {
+  const [w, h] = size(c);
+  for (const e of c.eyes) {
+    const [x, y] = project(c, e.u, e.v, warp, t), R = e.r * Math.max(w, h) * Math.abs(c.sx);
+    if (e.last) {
+      const ax = (x - e.last[0]) / Math.max(dt, 0.001), ay = (y - e.last[1]) / Math.max(dt, 0.001);
+      e.vx -= (ax - (e.lv ? e.lv[0] : ax)) * 0.004; e.vy -= (ay - (e.lv ? e.lv[1] : ay)) * 0.004; e.lv = [ax, ay];
+    }
+    e.last = [x, y];
+    e.vy += 9 * dt; e.vx -= e.px * 30 * dt; e.vy -= e.py * 30 * dt; e.vx *= 0.94; e.vy *= 0.94;
+    e.px += e.vx * dt * 4; e.py += e.vy * dt * 4;
+    const l = Math.hypot(e.px, e.py); if (l > 0.45) { e.px *= 0.45 / l; e.py *= 0.45 / l; e.vx *= -0.4; e.vy *= -0.4; }
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#111"; ctx.lineWidth = Math.max(2, R * 0.12);
+    ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(x + e.px * R, y + e.py * R, R * 0.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x + e.px * R - R * 0.15, y + e.py * R - R * 0.18, R * 0.13, 0, TAU); ctx.fill();
+  }
+}
+
+// ------------------------------------------------------------------ scenes
+const SCENES = {
+  forest: { label: "Pembury forest" }, space: { label: "Space" }, sea: { label: "Under the sea" },
+  disco: { label: "Disco" }, paper: { label: "Plain paper" },
+};
+const bgCache = {};
+function bgStatic(name) {
+  if (bgCache[name]) return bgCache[name];
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  if (name === "forest") {
+    const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#f7e3b8"); sky.addColorStop(1, "#cfe2cf"); g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    const rows = [[430, "#9cbf9a", 210], [500, "#6f9a72", 260], [580, "#4b7a55", 300]];
+    let k = 5;
+    for (const [y, col, h] of rows) for (let x = -40; x < W + 60; x += 80 + ((k = (k * 37 + 11) % 97) % 50)) {
+      g.fillStyle = "#4a3426"; g.fillRect(x - 7, y - h * 0.45, 14, h * 0.45);
+      g.fillStyle = col;
+      if (k % 3) { for (const [dx, dy, r] of [[0, -0.62, 0.3], [-0.18, -0.5, 0.22], [0.18, -0.5, 0.22]]) { g.beginPath(); g.arc(x + dx * h, y + dy * h, r * h, 0, TAU); g.fill(); } }
+      else { g.beginPath(); g.moveTo(x, y - h * 1.05); g.lineTo(x + h * 0.3, y - h * 0.15); g.lineTo(x - h * 0.3, y - h * 0.15); g.fill(); }
+    }
+    g.fillStyle = "#7d9a5f"; g.beginPath(); g.moveTo(0, 600); g.quadraticCurveTo(W / 2, 560, W, 600); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+  } else if (name === "space") {
+    const s = g.createRadialGradient(W * 0.7, H * 0.3, 50, W / 2, H / 2, W * 0.8); s.addColorStop(0, "#2a2160"); s.addColorStop(1, "#07071a"); g.fillStyle = s; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#e9a95c"; g.beginPath(); g.arc(1080, 150, 70, 0, TAU); g.fill(); g.strokeStyle = "#f6d58c"; g.lineWidth = 8; g.beginPath(); g.ellipse(1080, 150, 120, 26, -0.3, 0, TAU); g.stroke();
+    g.fillStyle = "#9a9aa8"; g.beginPath(); g.arc(W / 2, H + 380, 520, 0, TAU); g.fill();
+    g.fillStyle = "#83838f"; for (const [x, y, r] of [[480, 650, 30], [760, 680, 22], [620, 620, 14]]) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+  } else if (name === "sea") {
+    const s = g.createLinearGradient(0, 0, 0, H); s.addColorStop(0, "#5fc7e6"); s.addColorStop(1, "#155a8a"); g.fillStyle = s; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#e8d39a"; g.beginPath(); g.moveTo(0, 640); g.quadraticCurveTo(W / 2, 600, W, 650); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    for (let k = 0; k < 9; k++) { g.strokeStyle = ["#3fae6a", "#2f8f5a", "#56c27a"][k % 3]; g.lineWidth = 12; g.lineCap = "round"; const x = 60 + k * 140; g.beginPath(); g.moveTo(x, 660); g.quadraticCurveTo(x - 30, 560, x + 10, 470 + (k % 3) * 30); g.stroke(); }
+  } else if (name === "disco") {
+    g.fillStyle = "#1a1030"; g.fillRect(0, 0, W, H);
+    for (let y = 560; y < H; y += 40) for (let x = 0; x < W; x += 80) { g.fillStyle = ((x / 80 + y / 40) % 2) ? "#3b2a60" : "#2a1e48"; g.fillRect(x, y, 80, 40); }
+  } else {
+    g.fillStyle = "#fffaf0"; g.fillRect(0, 0, W, H); g.strokeStyle = "#cfe0f0"; g.lineWidth = 2;
+    for (let y = 60; y < H; y += 44) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    g.strokeStyle = "#f2b6b6"; g.beginPath(); g.moveTo(110, 0); g.lineTo(110, H); g.stroke();
+  }
+  return (bgCache[name] = c);
+}
+function drawScene(t) {
+  ctx.drawImage(bgStatic(scene), 0, 0);
+  if (scene === "space") for (let k = 0; k < 90; k++) { ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + k)); ctx.fillStyle = "#fff"; ctx.fillRect((k * 151) % W, (k * 89) % 520, 2 + (k % 3), 2 + (k % 3)); }
+  if (scene === "sea") { for (let k = 0; k < 24; k++) { const y = H - ((t * (40 + (k % 5) * 12) + k * 97) % (H + 40)); ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc((k * 173) % W + Math.sin(t * 2 + k) * 10, y, 5 + (k % 4) * 3, 0, TAU); ctx.stroke(); } }
+  if (scene === "disco") {
+    for (let k = 0; k < 7; k++) { const a = t * 0.8 + k; ctx.fillStyle = `hsla(${(k * 50 + t * 80) % 360},90%,60%,.28)`; ctx.beginPath(); ctx.moveTo(W / 2, -20); ctx.lineTo(W / 2 + Math.sin(a) * 900 - 90, H); ctx.lineTo(W / 2 + Math.sin(a) * 900 + 90, H); ctx.fill(); }
+    ctx.fillStyle = "#cfd3dc"; ctx.beginPath(); ctx.arc(W / 2, 50, 46, 0, TAU); ctx.fill();
+    for (let k = 0; k < 30; k++) { ctx.fillStyle = `hsl(${(k * 37 + t * 200) % 360},80%,75%)`; ctx.fillRect(W / 2 - 40 + (k % 6) * 14, 18 + Math.floor(k / 6) * 14, 10, 10); }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ------------------------------------------------------------------ the main loop
+const particles = [];
+let shake = 0, t0 = performance.now(), lastT = 0;
+function frame(now) {
+  const t = (now - t0) / 1000, dt = Math.min(0.05, t - lastT); lastT = t;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (shake > 0) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.9; if (shake < 0.5) shake = 0; }
+  const base = ctx.getTransform();
+  drawScene(t);
+  for (const c of creatures) {
+    const ef = effectFor(c, t);
+    c.x = ef === EFFECTS.walk && c.wx !== null ? c.wx : c.homeX; c.y = c.homeY; c.rot = 0; c.sx = 1; c.sy = 1; c.alpha = 1; c.hue = 0;
+    if (ef.pose) ef.pose(c, t, dt);
+    if (c.jump > 0) { c.jump = Math.max(0, c.jump - dt * 1.6); const j = Math.sin(c.jump * Math.PI); c.y -= j * 140; c.sy *= 1 + 0.15 * j; c.sx *= 1 - 0.1 * j; }
+    // shadow
+    const [w, h] = size(c);
+    ctx.setTransform(base); ctx.fillStyle = "rgba(0,0,0,.16)"; ctx.beginPath(); ctx.ellipse(c.x, c.homeY + h * 0.48, w * 0.4 * Math.abs(c.sx), 12, 0, 0, TAU); ctx.fill();
+    if (ef.draw) ef.draw(c, t); else drawCreature(c, t, ef.warp || null);
+    ctx.setTransform(base);
+    if (!ef.draw || ef === EFFECTS.explode && (t % 4.2 < 0.5 || t % 4.2 > 3.4)) drawEyes(c, t, ef.warp || null, dt);
+    if (c === selected && dragging) { ctx.strokeStyle = "rgba(42,42,53,.5)"; ctx.setLineDash([10, 8]); ctx.lineWidth = 3; ctx.strokeRect(c.x - w / 2, c.y - h / 2, w, h); ctx.setLineDash([]); }
+  }
+  for (let k = particles.length - 1; k >= 0; k--) {
+    const p = particles[k]; p.life -= dt; if (p.life <= 0) { particles.splice(k, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; ctx.globalAlpha = p.life / 0.6; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, 8 * p.life + 3, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(frame);
+}
+
+// ------------------------------------------------------------------ touching the stage: drag, tap to jump, tap to stick eyes on
+let dragging = false, down = null;
+function stagePoint(ev) { const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H]; }
+function hit(x, y) {
+  for (let i = creatures.length - 1; i >= 0; i--) {
+    const c = creatures[i], [w, h] = size(c), sx = Math.abs(c.sx) || 1, sy = Math.abs(c.sy) || 1;
+    const cs = Math.cos(-c.rot), sn = Math.sin(-c.rot), lx = ((x - c.x) * cs - (y - c.y) * sn) / sx, ly = ((x - c.x) * sn + (y - c.y) * cs) / sy;
+    if (Math.abs(lx) < w / 2 && Math.abs(ly) < h / 2) return [c, (c.sx < 0 ? -lx : lx) / w + 0.5, ly / h + 0.5];
+  }
+  return null;
+}
+cv.addEventListener("pointerdown", (ev) => {
+  audio();
+  const [x, y] = stagePoint(ev), h = hit(x, y);
+  down = { x, y, time: performance.now(), h };
+  if (h) { selected = h[0]; cv.setPointerCapture(ev.pointerId); cv.style.cursor = "grabbing"; }
+});
+cv.addEventListener("pointermove", (ev) => {
+  if (!down || !down.h) return;
+  const [x, y] = stagePoint(ev);
+  if (!dragging && Math.hypot(x - down.x, y - down.y) > 10) dragging = true;
+  if (dragging) { const c = down.h[0]; c.homeX = clamp(c.homeX + x - down.x, 0, W); c.homeY = clamp(c.homeY + y - down.y, 60, H - 40); c.wx = null; down.x = x; down.y = y; }
+});
+cv.addEventListener("pointerup", () => {
+  if (down && down.h && !dragging) {
+    const [c, u, v] = down.h;
+    if (eyesMode) addEye(c, clamp(u, 0, 1), clamp(v, 0, 1)); else { c.jump = 1; SFX.boing(); }
+  }
+  dragging = false; down = null; cv.style.cursor = "grab";
+});
+
+// ------------------------------------------------------------------ buttons
+const effBox = $("effects");
+for (const [k, e] of Object.entries(EFFECTS)) {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = e.label; b.style.setProperty("--c", e.c); b.dataset.k = k;
+  b.setAttribute("aria-pressed", String(k === effect));
+  b.onclick = () => { effect = k; t0 = performance.now(); lastT = 0; for (const c of creatures) { c.wx = null; c.bits = null; c.mine = null; } effBox.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); (SFX[e.sfx] || SFX.blip)(); };
+  effBox.append(b);
+}
+const sceneBox = $("scenes");
+for (const [k, s] of Object.entries(SCENES)) {
+  const b = document.createElement("button"); b.type = "button"; b.className = "small"; b.textContent = s.label; b.setAttribute("aria-pressed", String(k === scene));
+  b.onclick = () => { scene = k; sceneBox.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); SFX.blip(); };
+  sceneBox.append(b);
+}
+$("eyes").onclick = () => {
+  eyesMode = !eyesMode; $("eyes").setAttribute("aria-pressed", String(eyesMode));
+  $("hint").textContent = eyesMode ? "Tap on a drawing to stick on a googly eye. Tap Googly eyes again when you have finished." : "Drag your drawings around, and tap them to make them jump.";
+};
+$("remove").onclick = () => {
+  if (!creatures.length) return;
+  const c = selected && creatures.includes(selected) ? selected : creatures[creatures.length - 1];
+  creatures.splice(creatures.indexOf(c), 1); selected = null; layout(); SFX.pop();
+};
+
+// adding a drawing
+let cutResult = null;
+function refreshCut() {
+  if (!source) return;
+  cutResult = cutOut(source, +$("tol").value, $("keepPaper").getAttribute("aria-pressed") === "true");
+  const p = $("preview"); p.width = cutResult.width; p.height = cutResult.height; p.getContext("2d").drawImage(cutResult, 0, 0);
+}
+let cutTimer = null;
+$("tol").oninput = () => { clearTimeout(cutTimer); cutTimer = setTimeout(refreshCut, 120); };
+$("rotate").onclick = () => { rotation = (rotation + 1) % 4; refreshCut(); };
+$("keepPaper").onclick = () => { const b = $("keepPaper"); b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); refreshCut(); };
+$("cancelCut").onclick = () => $("cut").close();
+$("useIt").onclick = () => { if (cutResult) { const c = addCreature(cutResult); c.jump = 1; SFX.sparkle(); } $("cut").close(); $("hint").textContent = "Drag your drawings around, and tap them to make them jump."; };
+$("file").onchange = async (ev) => {
+  const f = ev.target.files && ev.target.files[0]; ev.target.value = "";
+  if (!f) return;
+  try { source = await loadImage(f); } catch (e) { $("hint").textContent = "That picture wouldn't open. Try a photo (JPEG or PNG)."; return; }
+  rotation = 0; $("keepPaper").setAttribute("aria-pressed", "false");
+  $("cut").showModal(); setTimeout(refreshCut, 30);
+};
+
+// recording a video of the stage
+let recorder = null, lastBlob = null;
+$("record").onclick = () => {
+  if (recorder) return;
+  if (!cv.captureStream || !window.MediaRecorder) { $("hint").textContent = "This browser can't make videos, sorry. Try Safari on the iPad, or Chrome."; return; }
+  audio();
+  const stream = cv.captureStream(30);
+  if (recDest) recDest.stream.getAudioTracks().forEach((tr) => stream.addTrack(tr));
+  const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+  const type = types.find((x) => MediaRecorder.isTypeSupported(x)) || "";
+  const chunks = [];
+  try { recorder = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 4e6 } : undefined); } catch (e) { recorder = null; $("hint").textContent = "Couldn't start the video, sorry."; return; }
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    $("recBadge").hidden = true; $("record").disabled = false;
+    lastBlob = new Blob(chunks, { type: recorder.mimeType || type || "video/webm" }); recorder = null;
+    $("vid").src = URL.createObjectURL(lastBlob); $("saveNote").textContent = "";
+    $("result").showModal(); $("vid").play().catch(() => {});
+  };
+  $("recBadge").hidden = false; $("record").disabled = true;
+  let n = 6; $("recBadge").textContent = "Recording… " + n;
+  const tick = setInterval(() => { n--; $("recBadge").textContent = "Recording… " + n; if (n <= 0) { clearInterval(tick); recorder.stop(); } }, 1000);
+  recorder.start(250);
+};
+$("closeVid").onclick = () => $("result").close();
+$("saveVid").onclick = async () => {
+  if (!lastBlob) return;
+  const ext = lastBlob.type.includes("mp4") ? "mp4" : "webm", name = "wiggle-machine." + ext;
+  const file = new File([lastBlob], name, { type: lastBlob.type });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "The Wiggle Machine" }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(lastBlob); a.download = name; document.body.append(a); a.click(); a.remove();
+  $("saveNote").textContent = "Saved to your Downloads.";
+};
+
+// start with two demo drawings, run through the same cutting-out as a real photo
+source = demoDrawing(0); addCreature(cutOut(source, 0.17, false));
+source = demoDrawing(1); addCreature(cutOut(source, 0.17, false));
+source = null;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
