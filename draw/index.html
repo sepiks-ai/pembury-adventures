@@ -61,7 +61,11 @@ dialog { border: 4px solid var(--ink); border-radius: 18px; padding: 16px; backg
 dialog::backdrop { background: rgba(42,42,53,.55); }
 dialog h2 { font-family: var(--display); font-weight: 400; margin: 0 0 8px; font-size: 28px; }
 .check { background: repeating-conic-gradient(#e6e0d4 0 25%, #fff 0 50%) 0 0 / 24px 24px; border-radius: 12px; border: 3px solid var(--ink); display: grid; place-items: center; min-height: 220px; max-height: 50vh; overflow: hidden; }
-.check canvas { max-width: 100%; max-height: 48vh; display: block; }
+.check canvas { max-width: 100%; max-height: 48vh; display: block; cursor: pointer; }
+.piece { border-color: var(--pc); box-shadow: 3px 3px 0 var(--pc); }
+.piece b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--pc); color: #fff; }
+.piece[aria-pressed="false"] { background: #eee6d8; color: #6b6458; text-decoration: line-through; }
+button:disabled { opacity: .45; cursor: default; }
 .slider { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font: 700 16px var(--body); margin: 12px 0; }
 .slider input { width: 100%; accent-color: var(--tomato); height: 32px; }
 .result video { width: 100%; border-radius: 12px; border: 3px solid var(--ink); background: #000; }
@@ -105,6 +109,7 @@ dialog h2 { font-family: var(--display); font-weight: 400; margin: 0 0 8px; font
   <h2>Cutting it out</h2>
   <div class="check"><canvas id="preview"></canvas></div>
   <p class="label" id="found" style="margin:8px 0 0"></p>
+  <div class="row" id="pieces" hidden style="margin-top:8px"></div>
   <div class="slider"><span>Rub out less</span><input id="tol" type="range" min="0.06" max="0.4" step="0.01" value="0.17" aria-label="How much paper to rub out"><span>Rub out more</span></div>
   <div class="row">
     <button id="rotate" type="button">Turn it</button>
@@ -348,9 +353,11 @@ function cutOut(img, tol, keepPaper) {
     to[l] = best;
   }
   if (big.length <= 1 || big.length > 8) return { whole, parts: [whole], w, h };
-  const parts = big.map((q) => { const sel = new Uint8Array(N); for (let k = 0; k < N; k++) if (mask[k] && to[lab[k]] === q) sel[k] = 1; return spriteFrom(sel); });
+  const sels = big.map((q) => { const sel = new Uint8Array(N); for (let k = 0; k < N; k++) if (mask[k] && to[lab[k]] === q) sel[k] = 1; return sel; });
+  const parts = sels.map((sel) => { const sp = spriteFrom(sel); sp.sel = sel; return sp; });
   parts.sort((a, b) => a.box[0] - b.box[0]);
-  return { whole, parts, w, h };
+  const combine = (list) => { const sel = new Uint8Array(N); for (const sp of list) for (let k = 0; k < N; k++) if (sp.sel[k]) sel[k] = 1; return spriteFrom(sel); };
+  return { whole, parts, combine, w, h };
 }
 
 // ------------------------------------------------------------------ a demo drawing, so the stage is never empty
@@ -709,35 +716,64 @@ $("remove").onclick = () => {
 };
 
 // adding a drawing
-let cutResult = null, together = false;
+let cutResult = null, together = false, removed = new Set();
 const PART_COLS = ["#ef5a3c", "#3aa0e8", "#4cb050", "#8a4fc8", "#ffc531", "#e46b7a", "#2aa198", "#b5523b"];
-function refreshCut() {
+function refreshCut(recompute = true) {
   if (!source) return;
-  cutResult = cutOut(source, +$("tol").value, $("keepPaper").getAttribute("aria-pressed") === "true");
+  if (recompute || !cutResult) cutResult = cutOut(source, +$("tol").value, $("keepPaper").getAttribute("aria-pressed") === "true");
   const multi = cutResult.parts.length > 1;
+  for (const i of [...removed]) if (i >= cutResult.parts.length) removed.delete(i);
+  const kept = cutResult.parts.length - removed.size;
   $("together").hidden = !multi;
-  $("found").textContent = multi ? (together ? `${cutResult.parts.length} characters, kept together as one picture.` : `We found ${cutResult.parts.length} characters. Each one will move on its own.`) : "";
+  $("found").textContent = !multi ? "" : `We found ${cutResult.parts.length} things. ` + (removed.size ? `Rubbing out ${removed.size}, keeping ${kept}. ` : "Tap a number to rub out anything you don't want. ") + (together ? "The rest stay together as one picture." : "Each one will move on its own.");
+  $("useIt").disabled = multi && kept === 0;
+  // a button per piece, to rub it out or bring it back
+  const row = $("pieces"); row.innerHTML = ""; row.hidden = !multi;
+  cutResult.parts.forEach((q, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "small piece";
+    b.style.setProperty("--pc", PART_COLS[i % PART_COLS.length]);
+    b.setAttribute("aria-pressed", String(!removed.has(i)));
+    b.innerHTML = `<b>${i + 1}</b> ${removed.has(i) ? "Rubbed out" : "Keep"}`;
+    b.onclick = () => { removed.has(i) ? removed.delete(i) : removed.add(i); SFX.blip(); refreshCut(false); };
+    row.append(b);
+  });
   const p = $("preview"), g = p.getContext("2d");
-  if (!multi || together) { p.width = cutResult.whole.width; p.height = cutResult.whole.height; g.drawImage(cutResult.whole, 0, 0); return; }
+  if (!multi) { p.width = cutResult.whole.width; p.height = cutResult.whole.height; g.drawImage(cutResult.whole, 0, 0); return; }
   // show where each character is, on the whole picture
   const B = (cutResult.whole.width - (cutResult.whole.box[2] - cutResult.whole.box[0] + 1)) / 2, ox = cutResult.whole.box[0] - B, oy = cutResult.whole.box[1] - B;
   p.width = cutResult.whole.width; p.height = cutResult.whole.height; g.drawImage(cutResult.whole, 0, 0);
   g.lineWidth = Math.max(3, p.width / 200); g.setLineDash([12, 8]); g.font = `700 ${Math.max(18, p.width / 22)}px Andika, sans-serif`;
   cutResult.parts.forEach((q, i) => {
-    const [x0, y0, x1, y1] = q.box; g.strokeStyle = g.fillStyle = PART_COLS[i % PART_COLS.length];
+    const [x0, y0, x1, y1] = q.box;
+    if (removed.has(i)) {
+      g.save(); g.globalCompositeOperation = "destination-out"; g.globalAlpha = 0.8; g.drawImage(q, x0 - ox - B, y0 - oy - B); g.restore();
+      g.save(); g.setLineDash([]); g.strokeStyle = "#2a2a35"; g.lineWidth = Math.max(4, p.width / 120); g.beginPath();
+      g.moveTo(x0 - ox, y0 - oy); g.lineTo(x1 - ox, y1 - oy); g.moveTo(x1 - ox, y0 - oy); g.lineTo(x0 - ox, y1 - oy); g.stroke(); g.restore();
+    }
+    g.strokeStyle = g.fillStyle = PART_COLS[i % PART_COLS.length];
     g.strokeRect(x0 - ox - 4, y0 - oy - 4, x1 - x0 + 8, y1 - y0 + 8);
     g.fillText(String(i + 1), x0 - ox, y0 - oy - 10 < 20 ? y1 - oy + 30 : y0 - oy - 10);
   });
 }
 let cutTimer = null;
-$("tol").oninput = () => { clearTimeout(cutTimer); cutTimer = setTimeout(refreshCut, 120); };
-$("rotate").onclick = () => { rotation = (rotation + 1) % 4; refreshCut(); };
+$("tol").oninput = () => { clearTimeout(cutTimer); cutTimer = setTimeout(() => { removed = new Set(); refreshCut(); }, 120); };
+$("rotate").onclick = () => { rotation = (rotation + 1) % 4; removed = new Set(); refreshCut(); };
 $("keepPaper").onclick = () => { const b = $("keepPaper"); b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); refreshCut(); };
 $("cancelCut").onclick = () => $("cut").close();
-$("together").onclick = () => { together = !together; $("together").setAttribute("aria-pressed", String(together)); refreshCut(); };
+$("together").onclick = () => { together = !together; $("together").setAttribute("aria-pressed", String(together)); refreshCut(false); };
+// tapping a piece in the picture rubs it out, or brings it back
+$("preview").addEventListener("click", (ev) => {
+  if (!cutResult || cutResult.parts.length < 2) return;
+  const p = $("preview"), r = p.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * p.width, y = (ev.clientY - r.top) / r.height * p.height;
+  const W0 = cutResult.whole, B = (W0.width - (W0.box[2] - W0.box[0] + 1)) / 2, ox = W0.box[0] - B, oy = W0.box[1] - B;
+  let hitI = -1, best = Infinity;
+  cutResult.parts.forEach((q, i) => { const [x0, y0, x1, y1] = q.box; if (x >= x0 - ox - 6 && x <= x1 - ox + 6 && y >= y0 - oy - 6 && y <= y1 - oy + 6) { const a = (x1 - x0) * (y1 - y0); if (a < best) { best = a; hitI = i; } } });
+  if (hitI >= 0) { removed.has(hitI) ? removed.delete(hitI) : removed.add(hitI); SFX.blip(); refreshCut(false); }
+});
 $("useIt").onclick = () => {
   if (cutResult) {
-    const list = together || cutResult.parts.length === 1 ? [cutResult.whole] : cutResult.parts;
+    const keep = cutResult.parts.filter((q, i) => !removed.has(i));
+    const list = cutResult.parts.length === 1 ? [cutResult.whole] : together ? [removed.size ? cutResult.combine(keep) : cutResult.whole] : keep;
     const top = Math.max(...list.map((sp) => Math.max(sp.width, sp.height)));
     list.forEach((sp) => { const c = addCreature(sp, Math.max(0.45, Math.max(sp.width, sp.height) / top)); c.jump = 1; });
     SFX.sparkle();
@@ -747,7 +783,7 @@ $("file").onchange = async (ev) => {
   const f = ev.target.files && ev.target.files[0]; ev.target.value = "";
   if (!f) return;
   try { source = await loadImage(f); } catch (e) { $("hint").textContent = "That picture wouldn't open. Try a photo (JPEG or PNG)."; return; }
-  rotation = 0; together = false; $("together").setAttribute("aria-pressed", "false"); $("keepPaper").setAttribute("aria-pressed", "false");
+  rotation = 0; together = false; removed = new Set(); $("together").setAttribute("aria-pressed", "false"); $("keepPaper").setAttribute("aria-pressed", "false");
   $("cut").showModal(); setTimeout(refreshCut, 30);
 };
 
