@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>The Swords of Pembury</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap">
+<style>
+/* Layout: a storybook spread — the picture (the scene) above, the page of text and the twins' buttons below, framed in forest green. One committed look, so no dark-mode switch. */
+:root {
+  --forest: #1f3a2e;     /* the frame: the forest at dusk */
+  --forest-2: #2b4c3c;
+  --page: #f8f1e1;       /* the book's cream page, as in the preview */
+  --ink: #2c2420;
+  --muted: #6d5f52;
+  --gold: #d9a441;       /* forest magic */
+  --elin: #e4735a;       /* character colours from the series bible */
+  --alva: #3f8697;
+  --paul: #b8862f;
+  --clarissa: #b5523b;
+  --sukhi: #c9822f;
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --story: "Andika", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  background: var(--forest) radial-gradient(120% 80% at 50% 0%, var(--forest-2), var(--forest) 70%);
+  color: var(--ink); font-family: var(--story);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+.book { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--page); }
+header h1 { font-family: var(--display); font-weight: 400; font-size: clamp(20px, 3.4vw, 30px); margin: 0; letter-spacing: .02em; text-wrap: balance; }
+.tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.treasures { display: flex; gap: 6px; }
+.treasures span { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.07); border: 1.5px dashed rgba(248,241,225,.35); }
+.treasures span.got { background: rgba(217,164,65,.22); border: 1.5px solid var(--gold); }
+.treasures svg { width: 26px; height: 26px; opacity: .3; }
+.treasures span.got svg { opacity: 1; }
+.chip-btn { font: 600 15px var(--story); color: var(--page); background: rgba(255,255,255,.08); border: 1.5px solid rgba(248,241,225,.4); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.chip-btn[aria-pressed="true"] { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.chip-btn:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.stage-wrap { position: relative; width: min(100%, calc(58vh * 5 / 3)); margin-inline: auto; border-radius: 14px; overflow: hidden; background: var(--forest-2); box-shadow: 0 10px 30px rgba(0,0,0,.35); border: 3px solid #13261d; }
+#stage { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; }
+.page { background: var(--page); border-radius: 14px; padding: 18px clamp(16px, 3vw, 28px) 18px; box-shadow: 0 10px 30px rgba(0,0,0,.3); display: flex; flex-direction: column; gap: 14px; min-height: 170px; }
+.who { font: 700 15px var(--story); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; min-height: 20px; }
+.who i { width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--muted)); display: inline-block; }
+#text { font-size: clamp(19px, 2.5vw, 24px); line-height: 1.5; margin: 0; max-width: 46em; text-wrap: pretty; }
+#text.verse { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: clamp(21px, 2.8vw, 27px); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.actions.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.side { border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: color-mix(in srgb, var(--c) 10%, var(--page)); border: 2px solid color-mix(in srgb, var(--c) 45%, var(--page)); }
+.side h3 { margin: 0; font: 700 15px var(--story); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.side .row { display: flex; gap: 8px; flex-wrap: wrap; }
+button.act { font: 700 clamp(17px, 2.2vw, 20px) var(--story); color: var(--ink); background: #fffaf0; border: 2.5px solid #d9c9a8; border-radius: 12px; padding: 12px 18px; min-height: 54px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; touch-action: manipulation; transition: transform .08s, background .15s; }
+button.act:hover { border-color: var(--gold); }
+button.act:active { transform: scale(.97); }
+button.act.primary { background: var(--forest); color: var(--page); border-color: var(--forest); }
+button.act.elin { border-color: var(--elin); }
+button.act.alva { border-color: var(--alva); }
+button.act.chosen { background: var(--gold); border-color: var(--gold); }
+button.act.wrong { animation: shake .35s; }
+button.act svg { width: 34px; height: 34px; flex: none; }
+button.act.big { flex: 1 1 160px; justify-content: center; }
+.meter { height: 14px; border-radius: 7px; background: #e9dcc0; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5a8fc7, #8fd0ff); transition: width .25s; }
+.hint { font-size: 16px; color: var(--muted); margin: 0; }
+.tap { cursor: pointer; }
+.tap.pulse { animation: glow 1.4s ease-in-out infinite; }
+@keyframes glow { 0%,100% { filter: drop-shadow(0 0 0 rgba(255,215,120,0)); } 50% { filter: drop-shadow(0 0 14px rgba(255,215,120,.95)); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes twinkle { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.float { animation: bob 3s ease-in-out infinite; transform-box: fill-box; }
+.twinkle { animation: twinkle 2.2s ease-in-out infinite; }
+@media (max-width: 560px) { .actions.split { grid-template-columns: 1fr; } button.act { padding: 10px 14px; } }
+@media (prefers-reduced-motion: reduce) { .float, .twinkle, .tap.pulse { animation: none; } }
+</style>
+
+<div class="book">
+  <header>
+    <h1>The Swords of Pembury</h1>
+    <div class="tools">
+      <div class="treasures" aria-label="Treasures found">
+        <span id="t-hat" title="The Hat"></span><span id="t-socks" title="The Socks"></span><span id="t-shield" title="The Shield"></span><span id="t-swords" title="The Swords"></span>
+      </div>
+      <button class="chip-btn" id="voice" aria-pressed="true" type="button">Read aloud</button>
+    </div>
+  </header>
+  <div class="stage-wrap"><svg id="stage" viewBox="0 0 1000 600" role="img" aria-label="Story picture"></svg></div>
+  <section class="page" aria-live="polite">
+    <div class="who" id="who"></div>
+    <p id="text"></p>
+    <div class="actions" id="actions"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const stage = $("stage");
+const rnd = (n) => Math.floor(Math.random() * n);
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ------------------------------------------------------------------ the cast (colours from the series bible)
+const C = {
+  elinTop: "#e4735a", alvaTop: "#3f8697", clarissaTop: "#b5523b", tweed: "#8c7a55", cords: "#a97f4b",
+  skinTwin: "#f0cba6", skinMum: "#efc9a2", skinDad: "#f6d9c0", hairDark: "#2a1f1c", hairBrown: "#6b4a2f",
+  sukhi: "#d9944a", spots: "#6b3f1f", eyes: "#4fae63", ink: "#2c2420",
+};
+const SPEAKERS = {
+  Elin: { c: "#e4735a", pitch: 1.3, rate: 1.0 }, Alva: { c: "#3f8697", pitch: 1.22, rate: 0.97 },
+  Daddy: { c: "#b8862f", pitch: 0.85, rate: 0.95 }, Mummy: { c: "#b5523b", pitch: 1.08, rate: 0.95 },
+  "The Witch": { c: "#5b4778", pitch: 0.7, rate: 0.85 }, "The Squirrel": { c: "#7a1f2b", pitch: 0.4, rate: 0.85 },
+  "The Guardian": { c: "#5d7a3a", pitch: 0.5, rate: 0.8 }, "The Forest": { c: "#d9a441", pitch: 0.6, rate: 0.8 },
+  "": { c: "#6d5f52", pitch: 1, rate: 0.95 },
+};
+
+function face(cy, s = 1) {
+  return `<circle cx="${-8 * s}" cy="${cy + 2 * s}" r="${2.7 * s}" fill="${C.ink}"/><circle cx="${8 * s}" cy="${cy + 2 * s}" r="${2.7 * s}" fill="${C.ink}"/>
+  <path d="M${-6 * s} ${cy + 11 * s} Q0 ${cy + 16 * s} ${6 * s} ${cy + 11 * s}" stroke="${C.ink}" stroke-width="${2 * s}" fill="none" stroke-linecap="round"/>
+  <circle cx="${-14 * s}" cy="${cy + 9 * s}" r="${4.5 * s}" fill="#e98b7a" opacity=".35"/><circle cx="${14 * s}" cy="${cy + 9 * s}" r="${4.5 * s}" fill="#e98b7a" opacity=".35"/>`;
+}
+// a girl, feet at the origin, about 160 tall
+function girl(id, x, y, who, opts = {}) {
+  const top = who === "elin" ? C.elinTop : C.alvaTop, s = opts.s || 1, flip = opts.flip ? -1 : 1;
+  const hair = who === "elin"
+    ? `<path d="M-25 -122 C-29 -158 29 -158 25 -122 Q16 -136 0 -138 Q-16 -136 -25 -122Z" fill="${C.hairDark}"/><circle cx="0" cy="-158" r="12" fill="${C.hairDark}"/>`
+    : `<path d="M-27 -106 C-32 -160 32 -160 27 -106 L19 -106 L19 -133 Q0 -139 -19 -133 L-19 -106Z" fill="${C.hairDark}"/>`;
+  const hat = opts.hat ? hatShape(0, -146, 0.85) : "";
+  const sock = opts.socks ? `<rect x="-14" y="-22" width="10" height="20" fill="url(#rainbow)"/><rect x="4" y="-22" width="10" height="20" fill="url(#rainbow)"/>` : "";
+  return `<g id="${id}" transform="translate(${x} ${y}) scale(${s * flip} ${s})">
+    <ellipse cx="0" cy="2" rx="34" ry="7" fill="#000" opacity=".18"/>
+    <rect x="-14" y="-40" width="10" height="40" rx="4" fill="#3b3330"/><rect x="4" y="-40" width="10" height="40" rx="4" fill="#3b3330"/>${sock}
+    <ellipse cx="-10" cy="-2" rx="9" ry="5" fill="#4a2e22"/><ellipse cx="10" cy="-2" rx="9" ry="5" fill="#4a2e22"/>
+    <path d="M-19 -100 L19 -100 L30 -36 L-30 -36Z" fill="${top}" stroke="${top}" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M-20 -94 L-32 -60" stroke="${top}" stroke-width="11" stroke-linecap="round"/><path d="M20 -94 L32 -60" stroke="${top}" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="-33" cy="-56" r="6" fill="${C.skinTwin}"/><circle cx="33" cy="-56" r="6" fill="${C.skinTwin}"/>
+    <rect x="-6" y="-106" width="12" height="10" fill="${C.skinTwin}"/>
+    <circle cx="0" cy="-124" r="24" fill="${C.skinTwin}"/>${face(-126)}${hair}${hat}
+  </g>`;
+}
+function adult(id, x, y, who, opts = {}) {
+  const s = (opts.s || 1) * 1.28, isDad = who === "paul";
+  const skin = isDad ? C.skinDad : C.skinMum;
+  const body = isDad
+    ? `<rect x="-17" y="-48" width="13" height="48" rx="5" fill="${C.cords}"/><rect x="4" y="-48" width="13" height="48" rx="5" fill="${C.cords}"/>
+       <path d="M-22 -102 L22 -102 L25 -44 L-25 -44Z" fill="${C.tweed}" stroke="${C.tweed}" stroke-width="8" stroke-linejoin="round"/>
+       <path d="M0 -102 L0 -46" stroke="#6f603f" stroke-width="2"/><path d="M-8 -102 L0 -86 L8 -102" fill="#f2ead8"/>`
+    : `<rect x="-13" y="-30" width="10" height="30" rx="4" fill="#3b3330"/><rect x="3" y="-30" width="10" height="30" rx="4" fill="#3b3330"/>
+       <path d="M-20 -102 L20 -102 L32 -28 L-32 -28Z" fill="${C.clarissaTop}" stroke="${C.clarissaTop}" stroke-width="8" stroke-linejoin="round"/>`;
+  const sleeve = isDad ? C.tweed : C.clarissaTop;
+  const hair = isDad
+    ? `<path d="M-25 -120 C-27 -158 27 -158 25 -120 Q14 -138 -4 -135 Q-16 -133 -25 -120Z" fill="${C.hairBrown}"/>`
+    : `<path d="M-25 -122 C-29 -158 29 -158 25 -122 Q18 -138 0 -140 Q-18 -138 -25 -122Z" fill="${C.hairDark}"/><circle cx="14" cy="-152" r="11" fill="${C.hairDark}"/><path d="M6 -160 L24 -144" stroke="#d9a441" stroke-width="2.5"/>`;
+  const cloak = opts.cloak ? `<path d="M-26 -100 L-38 -10 L-24 -18 L-14 -6 L0 -16 L14 -6 L24 -18 L38 -10 L26 -100Z" fill="#4b4060" opacity=".92"/>` : "";
+  const flowerHat = opts.flowers ? `<ellipse cx="0" cy="-142" rx="40" ry="9" fill="#d8c290"/><path d="M-22 -142 Q-20 -168 0 -168 Q20 -168 22 -142Z" fill="#d8c290"/><circle cx="-12" cy="-148" r="5" fill="#e4735a"/><circle cx="-2" cy="-150" r="5" fill="#f2d16b"/><circle cx="8" cy="-148" r="5" fill="#9c6bd1"/>` : "";
+  return `<g id="${id}" transform="translate(${x} ${y}) scale(${s} ${s})">
+    <ellipse cx="0" cy="2" rx="34" ry="7" fill="#000" opacity=".18"/>${cloak}${body}
+    <ellipse cx="-10" cy="-2" rx="10" ry="5" fill="#3a251c"/><ellipse cx="10" cy="-2" rx="10" ry="5" fill="#3a251c"/>
+    <path d="M-22 -96 L-30 -54" stroke="${sleeve}" stroke-width="12" stroke-linecap="round"/><path d="M22 -96 L30 -54" stroke="${sleeve}" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="-31" cy="-50" r="6" fill="${skin}"/><circle cx="31" cy="-50" r="6" fill="${skin}"/>
+    <rect x="-6" y="-108" width="12" height="10" fill="${skin}"/><circle cx="0" cy="-124" r="24" fill="${skin}"/>${face(-126)}${hair}${flowerHat}
+  </g>`;
+}
+function cat(id, x, y, pose = "sit", s = 1) {
+  if (pose === "walk") return `<g id="${id}" transform="translate(${x} ${y}) scale(${s})">
+    <ellipse cx="0" cy="2" rx="34" ry="5" fill="#000" opacity=".18"/>
+    <path d="M-28 -30 C-40 -50 -38 -78 -32 -88" stroke="${C.sukhi}" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M-20 -24 L-22 0 M-8 -22 L-8 0 M14 -22 L14 0 M24 -24 L26 0" stroke="${C.sukhi}" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-30" rx="32" ry="14" fill="${C.sukhi}"/>
+    <ellipse cx="-12" cy="-34" rx="5" ry="3" fill="${C.spots}"/><ellipse cx="4" cy="-28" rx="5" ry="3" fill="${C.spots}"/><ellipse cx="16" cy="-36" rx="4" ry="3" fill="${C.spots}"/>
+    <circle cx="34" cy="-42" r="14" fill="${C.sukhi}"/><path d="M24 -52 L26 -66 L34 -55Z M36 -55 L44 -66 L45 -51Z" fill="${C.sukhi}"/>
+    <circle cx="31" cy="-44" r="2.6" fill="${C.eyes}"/><circle cx="40" cy="-44" r="2.6" fill="${C.eyes}"/><path d="M34 -38 l2 2 l2 -2" stroke="${C.ink}" stroke-width="1.5" fill="none"/>
+  </g>`;
+  return `<g id="${id}" transform="translate(${x} ${y}) scale(${s})">
+    <ellipse cx="0" cy="2" rx="28" ry="5" fill="#000" opacity=".18"/>
+    <path d="M14 -6 C40 -4 42 -30 30 -36" stroke="${C.sukhi}" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-20" rx="20" ry="22" fill="${C.sukhi}"/>
+    <ellipse cx="-8" cy="-22" rx="4.5" ry="3" fill="${C.spots}"/><ellipse cx="7" cy="-14" rx="4.5" ry="3" fill="${C.spots}"/><ellipse cx="-4" cy="-8" rx="4" ry="2.6" fill="${C.spots}"/>
+    <circle cx="0" cy="-46" r="15" fill="${C.sukhi}"/><path d="M-12 -54 L-11 -70 L-2 -59Z M2 -59 L11 -70 L12 -54Z" fill="${C.sukhi}"/>
+    <circle cx="-6" cy="-47" r="2.8" fill="${C.eyes}"/><circle cx="6" cy="-47" r="2.8" fill="${C.eyes}"/><path d="M-2 -40 l2 2 l2 -2" stroke="${C.ink}" stroke-width="1.5" fill="none"/>
+  </g>`;
+}
+const DEFS = `<defs>
+  <linearGradient id="rainbow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4735a"/><stop offset=".2" stop-color="#e4735a"/><stop offset=".2" stop-color="#f2c14e"/><stop offset=".4" stop-color="#f2c14e"/><stop offset=".4" stop-color="#7fb35a"/><stop offset=".6" stop-color="#7fb35a"/><stop offset=".6" stop-color="#4f8fc7"/><stop offset=".8" stop-color="#4f8fc7"/><stop offset=".8" stop-color="#9c6bd1"/><stop offset="1" stop-color="#9c6bd1"/></linearGradient>
+  <radialGradient id="glowB"><stop offset="0" stop-color="#bfe6ff" stop-opacity=".9"/><stop offset="1" stop-color="#5aa0e0" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glowG"><stop offset="0" stop-color="#ffe7a0" stop-opacity=".95"/><stop offset="1" stop-color="#d9a441" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glowM"><stop offset="0" stop-color="#cfffc0" stop-opacity=".7"/><stop offset="1" stop-color="#7fcf8a" stop-opacity="0"/></radialGradient>
+  <linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7e3b8"/><stop offset="1" stop-color="#cfe2cf"/></linearGradient>
+  <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3b52"/><stop offset="1" stop-color="#4c6a5a"/></linearGradient>
+  <linearGradient id="golden" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d58c"/><stop offset="1" stop-color="#e9a95c"/></linearGradient>
+</defs>`;
+
+// ------------------------------------------------------------------ the treasures and the map's symbols
+function hatShape(x, y, s = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="0" rx="44" ry="10" fill="#1d1a2b"/><path d="M-24 0 Q-22 -44 0 -60 Q8 -40 26 -2Z" fill="#1d1a2b"/>
+  <g fill="#f6d97a"><circle cx="-8" cy="-20" r="2.4"/><circle cx="6" cy="-34" r="2"/><circle cx="10" cy="-12" r="2.4"/><circle cx="-30" cy="-2" r="1.8"/><circle cx="30" cy="0" r="1.8"/><circle cx="-2" cy="-46" r="1.6"/></g></g>`;
+}
+function socksShape(x, y, s = 1) {
+  const one = (dx, r) => `<g transform="translate(${dx} 0) rotate(${r})"><path d="M-9 -40 L9 -40 L9 -6 Q9 4 22 4 Q30 4 30 12 Q30 20 18 20 L-2 20 Q-9 20 -9 12Z" fill="url(#rainbow)" stroke="#fff6" stroke-width="1"/></g>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})">${one(-16, -6)}${one(10, 6)}</g>`;
+}
+function shieldShape(x, y, s = 1, glow = true) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">${glow ? `<circle r="70" fill="url(#glowB)"/>` : ""}<circle r="40" fill="#5a8fc7" stroke="#d7ecff" stroke-width="5"/>
+  <path d="M0 0 m0 -4 a4 4 0 1 1 -4 4 a8 8 0 1 1 8 -8 a14 14 0 1 1 -14 14 a20 20 0 1 1 20 -20" fill="none" stroke="#e8f5ff" stroke-width="3" stroke-linecap="round"/></g>`;
+}
+function swordsShape(x, y, s = 1) {
+  const blade = (r) => `<g transform="rotate(${r})"><path d="M-4 -70 L0 -82 L4 -70 L4 10 L-4 10Z" fill="#dfe6ee" stroke="#9fb0c0" stroke-width="1.5"/><rect x="-16" y="10" width="32" height="6" rx="2" fill="#c99a3b"/><rect x="-3.5" y="16" width="7" height="22" rx="2" fill="#6b4a2f"/><circle cy="42" r="5" fill="#c99a3b"/></g>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})">${blade(-28)}${blade(28)}</g>`;
+}
+function sym(name, x, y, s = 1, col = "#f6e6b4") {
+  const g = (d) => `<g transform="translate(${x} ${y}) scale(${s})">${d}</g>`;
+  switch (name) {
+    case "star": return g(`<path d="M0 -22 L6 -7 L22 -7 L9 3 L14 19 L0 9 L-14 19 L-9 3 L-22 -7 L-6 -7Z" fill="${col}"/>`);
+    case "moon": return g(`<path d="M6 -20 A20 20 0 1 0 6 20 A24 24 0 0 1 6 -20Z" fill="${col}"/>`);
+    case "sun": return g(`<circle r="10" fill="${col}"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M0 -14 L0 -21" transform="rotate(${a})" stroke="${col}" stroke-width="4" stroke-linecap="round"/>`).join("")}`);
+    case "spiral": return g(`<path d="M0 0 m0 -3 a3 3 0 1 1 -3 3 a7 7 0 1 1 7 -7 a12 12 0 1 1 -12 12 a17 17 0 1 1 17 -17" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round"/>`);
+    case "fish": return g(`<path d="M-18 -8 Q-6 -20 6 -10 L14 -16 L12 -6 Q4 2 -18 -8Z" fill="${col}"/><path d="M18 8 Q6 20 -6 10 L-14 16 L-12 6 Q-4 -2 18 8Z" fill="${col}"/>`);
+    case "leaf": return g(`<path d="M-16 14 Q-16 -16 16 -16 Q16 14 -16 14Z" fill="${col}"/><path d="M-14 12 L12 -12" stroke="#0004" stroke-width="2"/>`);
+    case "wave": return g(`<path d="M-20 0 Q-15 -10 -10 0 T0 0 T10 0 T20 0" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round"/><path d="M-20 10 Q-15 0 -10 10 T0 10 T10 10 T20 10" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round"/>`);
+    case "circle": return g(`<circle r="18" fill="none" stroke="${col}" stroke-width="5"/>`);
+    case "square": return g(`<rect x="-16" y="-16" width="32" height="32" fill="none" stroke="${col}" stroke-width="5"/>`);
+    case "rings": return g(`<circle cx="-8" r="14" fill="none" stroke="${col}" stroke-width="4"/><circle cx="8" r="14" fill="none" stroke="${col}" stroke-width="4"/>`);
+    case "triangle": return g(`<path d="M0 -18 L18 14 L-18 14Z" fill="none" stroke="${col}" stroke-width="5" stroke-linejoin="round"/>`);
+  }
+  return "";
+}
+const icon = (name, col = "#2c2420") => `<svg viewBox="-26 -26 52 52" aria-hidden="true">${sym(name, 0, 0, 1, col)}</svg>`;
+const treasureIcon = { hat: `<svg viewBox="-50 -66 100 80">${hatShape(0, 0)}</svg>`, socks: `<svg viewBox="-36 -46 76 72">${DEFS}${socksShape(0, 0)}</svg>`, shield: `<svg viewBox="-46 -46 92 92">${shieldShape(0, 0, 1, false)}</svg>`, swords: `<svg viewBox="-50 -90 100 140">${swordsShape(0, 0)}</svg>` };
+
+// ------------------------------------------------------------------ scenery
+function treeRound(x, y, h, col) { return `<rect x="${x - 6}" y="${y - h * 0.45}" width="12" height="${h * 0.45}" fill="#4a3426"/><circle cx="${x}" cy="${y - h * 0.62}" r="${h * 0.3}" fill="${col}"/><circle cx="${x - h * 0.18}" cy="${y - h * 0.5}" r="${h * 0.22}" fill="${col}"/><circle cx="${x + h * 0.18}" cy="${y - h * 0.5}" r="${h * 0.22}" fill="${col}"/>`; }
+function pine(x, y, h, col) { return `<rect x="${x - 5}" y="${y - h * 0.2}" width="10" height="${h * 0.2}" fill="#3e2b20"/><path d="M${x} ${y - h} L${x + h * 0.22} ${y - h * 0.55} L${x + h * 0.12} ${y - h * 0.55} L${x + h * 0.3} ${y - h * 0.18} L${x - h * 0.3} ${y - h * 0.18} L${x - h * 0.12} ${y - h * 0.55} L${x - h * 0.22} ${y - h * 0.55}Z" fill="${col}"/>`; }
+function forestRows(seed = 1, sky = "url(#dawn)") {
+  let out = `<rect width="1000" height="600" fill="${sky}"/>`;
+  const rows = [[300, "#9cbf9a", 150], [360, "#6f9a72", 190], [430, "#4b7a55", 230]];
+  let k = seed;
+  for (const [y, col, h] of rows) for (let x = -30; x < 1060; x += 70 + ((k = (k * 37 + 11) % 97) % 40)) out += k % 3 ? treeRound(x, y + (k % 20), h * (0.8 + (k % 10) / 25), col) : pine(x, y + (k % 20), h * 1.1, col);
+  return out;
+}
+const groundPath = `<path d="M0 470 Q500 430 1000 470 L1000 600 L0 600Z" fill="#7d9a5f"/><path d="M420 600 Q470 520 520 470 Q540 450 580 445 L620 445 Q590 470 590 520 Q600 570 680 600Z" fill="#c9b07a" opacity=".85"/>`;
+
+const SCENES = {
+  kitchen: () => `<rect width="1000" height="600" fill="#f3e7cf"/><rect x="330" y="40" width="340" height="230" rx="10" fill="#8a5a36"/>
+    <rect x="348" y="56" width="304" height="198" fill="url(#dawn)"/>${treeRound(390, 260, 170, "#3f6b4b")}${pine(470, 258, 190, "#2f5a3f")}${treeRound(560, 262, 180, "#3f6b4b")}${pine(630, 258, 160, "#2f5a3f")}
+    <path d="M498 56 V254 M348 152 H652" stroke="#8a5a36" stroke-width="10"/><rect x="320" y="262" width="360" height="16" rx="4" fill="#8a5a36"/>
+    ${[360, 470, 600].map((x) => `<path d="M${x} 262 q-8 -30 -22 -36 M${x} 262 q4 -34 16 -40 M${x} 262 q-2 -26 2 -44" stroke="#5f8f5a" stroke-width="5" fill="none" stroke-linecap="round"/>`).join("")}
+    <rect x="0" y="470" width="1000" height="130" fill="#d8c4a0"/>`,
+  table: () => `<rect x="150" y="395" width="700" height="22" rx="6" fill="#9a6e42"/><rect x="190" y="417" width="18" height="140" fill="#8a5f38"/><rect x="792" y="417" width="18" height="140" fill="#8a5f38"/>
+    <ellipse cx="455" cy="392" rx="58" ry="8" fill="#fff"/><rect x="420" y="380" width="26" height="9" rx="3" fill="#f2c14e"/><rect x="458" y="380" width="26" height="9" rx="3" fill="#e9a3a0"/>
+    <rect x="665" y="372" width="26" height="22" rx="4" fill="#c8664a"/><path d="M691 378 q10 0 10 7 q0 7 -10 7" stroke="#c8664a" stroke-width="4" fill="none"/>`,
+  journal: (open) => open ? `<g id="journal"><path d="M560 392 L600 382 L640 392 L640 398 L600 390 L560 398Z" fill="#6b3f1f"/><path d="M563 390 L600 382 L637 390 L600 386Z" fill="#f2e6c8"/></g>`
+    : `<g id="journal"><rect x="570" y="378" width="56" height="16" rx="3" fill="#6b3f1f"/><rect x="574" y="378" width="50" height="4" fill="#f2e6c8"/></g>`,
+  path: () => forestRows(3) + groundPath,
+  clearing: () => forestRows(7) + `<path d="M0 460 Q500 420 1000 460 L1000 600 L0 600Z" fill="#86a463"/>
+    <g transform="translate(560 455)"><path d="M-120 0 L-118 -120 L118 -132 L120 0Z" fill="#b8a07a"/><path d="M-150 -110 Q-20 -210 150 -134 L130 -118 Q-10 -180 -132 -98Z" fill="#5b4a3a"/><path d="M-138 -104 Q-10 -190 138 -128 L120 -120 Q0 -150 -120 -96Z" fill="#76604a"/>
+      <rect id="door" x="-22" y="-82" width="46" height="82" rx="20" fill="#4a3426"/><circle cx="14" cy="-40" r="3" fill="#d9a441"/>
+      <rect x="-96" y="-90" width="44" height="36" fill="#f2d98a" stroke="#4a3426" stroke-width="5"/><rect x="58" y="-96" width="40" height="34" fill="#f2d98a" stroke="#4a3426" stroke-width="5"/>
+      ${[-110, -60, 70, 104].map((x, i) => `<path d="M${x} 0 q${i % 2 ? 10 : -10} -40 0 -80 q-8 -16 4 -30" stroke="#4f7f45" stroke-width="6" fill="none" stroke-linecap="round"/>`).join("")}
+      <path d="M-40 -150 L-34 -186 L-14 -186 L-12 -158" fill="#6b5545"/></g>`,
+  cottageInside: () => `<rect width="1000" height="600" fill="#3a2d2a"/><rect y="440" width="1000" height="160" fill="#5a463c"/>
+    ${[0, 1, 2].map((r) => `<rect x="60" y="${110 + r * 90}" width="250" height="10" fill="#6b4f3b"/><rect x="690" y="${110 + r * 90}" width="250" height="10" fill="#6b4f3b"/>` +
+      [0, 1, 2, 3, 4].map((k) => `<rect x="${72 + k * 46}" y="${78 + r * 90}" width="26" height="32" rx="5" fill="${["#8bb08a", "#c9a96b", "#9c8bc7", "#b07a6a", "#7fa7b0"][(k + r) % 5]}" opacity=".85"/><rect x="${702 + k * 46}" y="${78 + r * 90}" width="26" height="32" rx="5" fill="${["#c9a96b", "#7fa7b0", "#8bb08a", "#9c8bc7", "#b07a6a"][(k + r) % 5]}" opacity=".85"/>`).join("")).join("")}
+    <rect x="455" y="330" width="90" height="110" fill="#6b4f3b"/><rect x="440" y="318" width="120" height="16" rx="4" fill="#7d5f48"/>`,
+  chamber: () => `<rect width="1000" height="600" fill="#1b1a24"/><ellipse cx="500" cy="300" rx="560" ry="340" fill="#262434"/>
+    ${["star", "moon", "spiral", "fish", "leaf", "sun", "wave", "star"].map((n, i) => `<g class="twinkle" style="animation-delay:${i * 0.3}s">${sym(n, 90 + i * 118, 70 + (i % 2) * 26, 0.8, "#c8b6ff")}</g>`).join("")}
+    <rect x="0" y="420" width="1000" height="180" fill="#2e2b3c"/><path d="M0 300 Q500 270 1000 300 L1000 440 Q500 410 0 440Z" fill="#07060c"/>`,
+  grove: () => `<rect width="1000" height="600" fill="url(#dusk)"/>${[40, 150, 260, 380, 620, 740, 860, 960].map((x, i) => pine(x, 520 - (i % 2) * 20, 420 + (i % 3) * 40, i % 2 ? "#23402f" : "#2c4d38")).join("")}
+    <rect y="500" width="1000" height="100" fill="#3d5a3b"/><rect x="470" y="40" width="60" height="470" fill="#4a3426"/><ellipse cx="500" cy="500" rx="40" ry="26" fill="#1a120d"/>`,
+  cavern: () => `<rect width="1000" height="600" fill="#1d2420"/><path d="M0 0 H1000 V90 Q800 140 500 110 Q200 140 0 90Z" fill="#141a17"/>
+    ${[[80, 160], [900, 200], [160, 470], [860, 480], [520, 70], [300, 120]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="90" ry="40" fill="url(#glowM)"/>`).join("")}
+    <rect y="470" width="1000" height="130" fill="#2b332d"/><path d="M60 470 L60 300 Q60 250 110 250 Q160 250 160 300 L160 470Z" fill="#0b0e0c"/>
+    <path d="M840 60 L860 60 L866 170 L846 170Z" fill="#f4e9b0" opacity=".85"/>
+    <rect x="455" y="370" width="90" height="100" fill="#55625a"/><rect x="440" y="358" width="120" height="16" rx="4" fill="#66746b"/>`,
+  hill: () => forestRows(11) + `<path d="M0 470 Q300 330 620 380 Q820 410 1000 470 L1000 600 L0 600Z" fill="#8d8a6a"/><ellipse cx="520" cy="430" rx="110" ry="46" fill="#1a140f"/><ellipse cx="520" cy="420" rx="110" ry="36" fill="#2a2018"/>`,
+  tunnel: () => `<rect width="1000" height="600" fill="#151c17"/>${[[120, 150], [880, 140], [500, 60], [240, 420], [760, 430]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="120" ry="50" fill="url(#glowM)"/>`).join("")}
+    <rect y="480" width="1000" height="120" fill="#28302a"/>`,
+  shieldRoom: () => `<rect width="1000" height="600" fill="#161a20"/><circle cx="500" cy="380" r="260" fill="#1e2530"/><rect y="470" width="1000" height="130" fill="#2a2b2e"/>`,
+  arch: () => `<rect width="1000" height="600" fill="url(#dusk)"/>${forestRows(19, "none")}<rect width="1000" height="600" fill="#2b3b52" opacity=".35"/><path d="M0 470 Q500 440 1000 470 L1000 600 L0 600Z" fill="#4f6b49"/>
+    <g id="archway"><path d="M330 480 Q300 120 500 100 Q700 120 670 480" fill="none" stroke="#4a3426" stroke-width="30" stroke-linecap="round"/><path d="M330 480 Q310 140 500 118 Q690 140 670 480" fill="none" stroke="#6b4f3b" stroke-width="10" stroke-dasharray="30 20"/>
+    ${[[350, 360, "hat"], [650, 360, "hat"], [338, 260, "shield"], [662, 260, "shield"], [380, 170, "socks"], [620, 170, "socks"]].map(([x, y]) => `<circle class="rune" cx="${x}" cy="${y}" r="9" fill="#d9a441" opacity=".25"/>`).join("")}</g>
+    <ellipse cx="500" cy="470" rx="420" ry="40" fill="#e6eef0" opacity=".18"/>`,
+  maze: () => `<rect width="1000" height="600" fill="#101826"/>${[...Array(40)].map((_, i) => `<circle cx="${(i * 137) % 1000}" cy="${(i * 71) % 220}" r="${1 + (i % 3)}" fill="#fff" opacity=".7" class="twinkle" style="animation-delay:${(i % 7) * 0.3}s"/>`).join("")}
+    <g stroke="#7fd6ff" stroke-width="6" opacity=".75" fill="none" stroke-linecap="round"><path d="M80 560 V300 H260 V200"/><path d="M920 560 V300 H740 V200"/><path d="M260 560 V420 H420"/><path d="M740 560 V420 H580"/><path d="M420 300 H580"/><path d="M340 200 H660"/></g>`,
+  edge: () => `<rect width="1000" height="600" fill="url(#golden)"/>${forestRows(23, "none").replace(/#9cbf9a|#6f9a72|#4b7a55/g, (m) => ({ "#9cbf9a": "#c7b46a", "#6f9a72": "#9c9a52", "#4b7a55": "#6f7a45" }[m]))}
+    <path d="M0 470 Q500 430 1000 470 L1000 600 L0 600Z" fill="#a0a060"/><g class="twinkle"><circle cx="760" cy="300" r="4" fill="#fff6c0"/><circle cx="776" cy="300" r="4" fill="#fff6c0"/></g>`,
+};
+
+function draw(...parts) { stage.innerHTML = DEFS + parts.join(""); }
+function el(id) { return stage.querySelector("#" + id); }
+function anim(id, frames, ms = 600, extra = {}) {
+  const e = typeof id === "string" ? el(id) : id;
+  if (!e) return Promise.resolve();
+  const a = e.animate(frames, Object.assign({ duration: ms, fill: "forwards", easing: "ease-in-out" }, extra));
+  return a.finished.catch(() => {});
+}
+// move a translated group by dx, dy (keeps its scale)
+function moveBy(id, dx, dy, ms = 700) {
+  const e = el(id); if (!e) return Promise.resolve();
+  const t = e.getAttribute("transform") || "";
+  const m = t.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)(.*)/);
+  if (!m) return Promise.resolve();
+  const x0 = +m[1], y0 = +m[2], rest = m[3];
+  const start = performance.now();
+  return new Promise((res) => {
+    const step = (now) => {
+      const k = Math.min(1, (now - start) / ms), e2 = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      e.setAttribute("transform", `translate(${x0 + dx * e2} ${y0 + dy * e2})${rest}`);
+      k < 1 ? requestAnimationFrame(step) : res();
+    };
+    requestAnimationFrame(step);
+  });
+}
+function pos(id) { const m = (el(id).getAttribute("transform") || "").match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/); return m ? [+m[1], +m[2]] : [0, 0]; }
+function add(svg) { stage.insertAdjacentHTML("beforeend", svg); }
+function remove(id) { const e = el(id); if (e) e.remove(); }
+
+// ------------------------------------------------------------------ sound: speech and a soft bell
+let voiceOn = true, gbVoice = null, actx = null;
+try { voiceOn = localStorage.getItem("pembury-voice") !== "off"; } catch (e) {}
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const vs = speechSynthesis.getVoices();
+  gbVoice = vs.find((v) => /en-GB/i.test(v.lang) && /female|libby|sonia|serena|kate|martha|google uk english female/i.test(v.name))
+    || vs.find((v) => /en-GB/i.test(v.lang)) || vs.find((v) => /^en/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } else $("voice").hidden = true;
+function speak(text, who = "") {
+  if (!voiceOn || !("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/\s+/g, " "));
+    const sp = SPEAKERS[who] || SPEAKERS[""];
+    if (gbVoice) u.voice = gbVoice;
+    u.lang = "en-GB"; u.pitch = sp.pitch; u.rate = sp.rate;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function bell(notes = [784, 988, 1175], gap = 0.12, vol = 0.18) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime + 0.02;
+    notes.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), o2 = actx.createOscillator(), g2 = actx.createGain();
+      o.type = "sine"; o.frequency.value = f; o2.type = "sine"; o2.frequency.value = f * 2.01;
+      const t = t0 + i * gap;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+      g2.gain.setValueAtTime(0, t); g2.gain.linearRampToValueAtTime(vol * 0.25, t + 0.01); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      o.connect(g).connect(actx.destination); o2.connect(g2).connect(actx.destination);
+      o.start(t); o2.start(t); o.stop(t + 1.7); o2.stop(t + 0.8);
+    });
+  } catch (e) {}
+}
+const chime = () => bell([784, 988, 1175, 1568], 0.1);
+const bonk = () => bell([330, 294], 0.09, 0.12);
+const rumble = () => bell([98, 92, 87], 0.15, 0.25);
+$("voice").setAttribute("aria-pressed", String(voiceOn));
+$("voice").onclick = () => {
+  voiceOn = !voiceOn; $("voice").setAttribute("aria-pressed", String(voiceOn));
+  try { localStorage.setItem("pembury-voice", voiceOn ? "on" : "off"); } catch (e) {}
+  if (!voiceOn && "speechSynthesis" in window) speechSynthesis.cancel(); else speak($("text").textContent, $("who").dataset.who || "");
+};
+
+// ------------------------------------------------------------------ the page: text, choices and taps
+function setText(who, text, verse = false) {
+  const sp = SPEAKERS[who] || SPEAKERS[""];
+  $("who").dataset.who = who;
+  $("who").innerHTML = who ? `<i style="--c:${sp.c}"></i>${who}` : "";
+  $("text").textContent = text; $("text").className = verse ? "verse" : "";
+  speak(text, who);
+}
+function clearActions() { const a = $("actions"); a.className = "actions"; a.innerHTML = ""; return a; }
+function button(label, cls = "", html = "") {
+  const b = document.createElement("button"); b.type = "button"; b.className = "act " + cls; b.innerHTML = html + `<span>${label}</span>`; return b;
+}
+// a line of story, then the Next button
+function say(who, text, opts = {}) {
+  setText(who, text, opts.verse);
+  const a = clearActions();
+  const b = button(opts.next || "Next", "primary", "");
+  a.append(b);
+  return new Promise((res) => { b.onclick = () => { res(); }; setTimeout(() => b.focus({ preventScroll: true }), 50); });
+}
+// a choice; wrong answers get a response and the question stays open
+function choose(who, text, options, opts = {}) {
+  setText(who, text, opts.verse);
+  const a = clearActions();
+  return new Promise((res) => {
+    for (const o of (opts.keepOrder ? options : shuffle(options))) {
+      const b = button(o.label, "big", o.icon ? icon(o.icon) : "");
+      if (o.ok) b.dataset.ok = "1";
+      b.onclick = async () => {
+        if (o.ok === false) {
+          bonk(); b.classList.remove("wrong"); void b.offsetWidth; b.classList.add("wrong");
+          if (o.reply) setText(o.reply[0], o.reply[1]);
+          return;
+        }
+        if (o.ok) chime();
+        res(o.value !== undefined ? o.value : o.label);
+      };
+      a.append(b);
+    }
+  });
+}
+// wait for a tap on something in the picture
+function tapOn(ids, who, text) {
+  setText(who, text);
+  const a = clearActions();
+  a.innerHTML = `<p class="hint">Tap the picture.</p>`;
+  return new Promise((res) => {
+    for (const id of [].concat(ids)) {
+      const e = el(id); if (!e) continue;
+      e.classList.add("tap", "pulse"); e.setAttribute("tabindex", "0"); e.setAttribute("role", "button");
+      const go = () => { for (const j of [].concat(ids)) { const f = el(j); if (f) { f.classList.remove("tap", "pulse"); f.onclick = null; f.onkeydown = null; } } res(id); };
+      e.onclick = go; e.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") go(); };
+    }
+  });
+}
+
+// ------------------------------------------------------------------ progress
+const CHAPTERS = [
+  ["morning", "Morning"], ["witch", "The Witch's Cottage"], ["squirrel", "The Vampire Squirrel"],
+  ["worm", "The Giant Worm"], ["swords", "The Swords of Pembury"], ["epilogue", "Epilogue"],
+];
+const got = new Set();
+function giveTreasure(t) { got.add(t); renderTreasures(); chime(); }
+function renderTreasures() {
+  for (const t of ["hat", "socks", "shield", "swords"]) { const s = $("t-" + t); s.innerHTML = treasureIcon[t]; s.classList.toggle("got", got.has(t)); }
+}
+function save(ch) { try { localStorage.setItem("pembury-1", ch); } catch (e) {} }
+function saved() { try { return localStorage.getItem("pembury-1"); } catch (e) { return null; } }
+const TREASURES_BEFORE = { morning: [], witch: [], squirrel: ["hat"], worm: ["hat", "socks"], swords: ["hat", "socks", "shield"], epilogue: ["hat", "socks", "shield", "swords"] };
+
+async function play(from) {
+  got.clear(); for (const t of TREASURES_BEFORE[from]) got.add(t); renderTreasures();
+  let i = CHAPTERS.findIndex((c) => c[0] === from);
+  for (; i < CHAPTERS.length; i++) {
+    const id = CHAPTERS[i][0];
+    save(id);
+    if (id !== "morning" && id !== "epilogue") await mapHub(id);
+    await STORY[id]();
+  }
+  save("morning");
+  await theEnd();
+}
+
+// ------------------------------------------------------------------ the map between chapters
+function mapScene(next) {
+  const marks = [
+    ["witch", 250, 300, "moon", "The Witch's Cottage"], ["squirrel", 470, 160, "leaf", "The Pine Grove"],
+    ["worm", 720, 250, "spiral", "The Worm's Hill"], ["swords", 560, 420, "star", "The Heart of the Forest"],
+  ];
+  const order = marks.map((m) => m[0]);
+  const ni = order.indexOf(next);
+  draw(`<rect width="1000" height="600" fill="#1f3a2e"/>
+    <path d="M70 40 L930 30 Q950 300 940 570 L60 575 Q45 300 70 40Z" fill="#efe0bd" stroke="#b89a62" stroke-width="4"/>
+    <path d="M110 80 L890 72 Q905 300 896 530 L104 535 Q92 300 110 80Z" fill="none" stroke="#b89a62" stroke-width="1.5" stroke-dasharray="6 6"/>
+    ${[...Array(26)].map((_, k) => { const x = 150 + ((k * 151) % 700), y = 110 + ((k * 89) % 380); return `<g opacity=".55">${k % 3 ? `<circle cx="${x}" cy="${y}" r="16" fill="#8aa074"/><rect x="${x - 2}" y="${y + 12}" width="4" height="10" fill="#7a5a3a"/>` : `<path d="M${x} ${y - 22} L${x + 14} ${y + 10} L${x - 14} ${y + 10}Z" fill="#6f8a5a"/>`}</g>`; }).join("")}
+    <path d="M130 500 C200 420 230 340 250 300 C320 220 400 170 470 160 C600 150 700 200 720 250 C740 330 640 400 560 420" fill="none" stroke="#8a5a36" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
+    ${marks.map(([id, x, y, s, label], k) => {
+      const done = k < ni, here = k === ni;
+      return `<g id="mark-${id}"><circle cx="${x}" cy="${y}" r="34" fill="${here ? "url(#glowG)" : "none"}"/><circle cx="${x}" cy="${y}" r="24" fill="${done ? "#d9c08a" : "#f6ecd2"}" stroke="#8a5a36" stroke-width="3"/>
+      ${sym(s, x, y, 0.8, done ? "#8a5a36" : here ? "#b5523b" : "#a99c84")}${done ? `<path d="M${x - 12} ${y} l8 8 l16 -16" stroke="#3f7a3f" stroke-width="5" fill="none"/>` : ""}
+      <text x="${x}" y="${y + 50}" text-anchor="middle" font-family="IM Fell English SC, Georgia, serif" font-size="22" fill="#5a3b22">${label}</text></g>`;
+    }).join("")}
+    <g transform="translate(860 500)">${sym("fish", 0, 0, 1.2, "#d9a441")}</g>
+    <text x="500" y="560" text-anchor="middle" font-family="IM Fell English, Georgia, serif" font-style="italic" font-size="22" fill="#5a3b22">To lift the forest's ancient plight, four treasures must be found and unite.</text>
+    <g id="you" transform="translate(${ni === 0 ? 130 : marks[ni - 1][1]} ${ni === 0 ? 500 : marks[ni - 1][2]})"><circle r="12" fill="#e4735a" cx="-8"/><circle r="12" fill="#3f8697" cx="8"/></g>`);
+  return marks[ni];
+}
+async function mapHub(next) {
+  const m = mapScene(next);
+  const lines = {
+    witch: "The map shows a crescent moon among the trees. Great-grandfather wrote that the first treasure, the Hat, is hidden there.",
+    squirrel: "The map is glowing on its own now, and a new mark has appeared to the north: the Socks of Pembury.",
+    worm: "The map's glow points to the next treasure, the Shield of Pembury, marked with a coiled spiral.",
+    swords: "One last mark, at the very heart of the forest: the Swords of Pembury.",
+  };
+  await tapOn("mark-" + next, "", lines[next] + " Tap the mark to go there.");
+  const [x0, y0] = pos("you");
+  await moveBy("you", m[1] - x0, m[2] - y0, 900);
+}
+
+// ------------------------------------------------------------------ the story
+const STORY = {};
+
+STORY.morning = async () => {
+  const kitchen = (journalOpen) => draw(SCENES.kitchen(), adult("mum", 230, 470, "clarissa"), girl("elin", 400, 470, "elin"), girl("alva", 510, 470, "alva"),
+    adult("dad", 720, 470, "paul"), SCENES.table(), SCENES.journal(journalOpen), `<g id="cushion"><ellipse cx="560" cy="560" rx="70" ry="18" fill="#c8664a"/>${cat("sukhi", 560, 552, "sit", 1)}</g>`);
+  kitchen(false);
+  await say("", "The morning sun came in through the plants on the kitchen windowsill. Elin and Alva sat side by side: toast with far too much butter (Elin) and bread with ham (Alva). Sukhi lay on a cushion, her green eyes fixed on the forest beyond the fence.");
+  await say("Alva", "Do you think the stories are true?");
+  await say("Elin", "Of course they're true! Mummy said she once saw a fox with glowing eyes vanish into the trees.");
+  await say("Mummy", "I said no such thing. I said the forest plays tricks on your eyes if you're not careful. Which is why you stay close to the house.");
+  await say("Daddy", "Every legend has some truth in it. They say the forest hides treasures, guarded by a witch, a giant worm... and a vampire squirrel.");
+  await say("Alva", "A vampire squirrel?");
+  await say("Daddy", "If the right people find four treasures, the Swords, the Shield, the Hat and the Socks of Pembury, they can break the curses and give the forest back its magic. Your great-grandfather wrote about a map to find them, here in his old journal...");
+  await tapOn("sukhi", "", "Sukhi's tail is twitching. She is looking at the journal in a very particular way. Tap Sukhi!");
+  await moveBy("sukhi", 40, -160, 500);
+  remove("journal"); add(SCENES.journal(true));
+  add(`<g id="mapsheet" transform="translate(600 392)"><path d="M-30 -14 L30 -16 L32 10 L-28 12Z" fill="#efe0bd" stroke="#b89a62" stroke-width="2"/></g>`);
+  await moveBy("mapsheet", -110, 0, 700);
+  await say("", "Sukhi leapt onto the table, skidded across the papers and knocked the journal flat. Something slid out from its back pages: a folded, yellowing sheet of parchment, which came to rest right in front of the twins.");
+  await say("Mummy", "Paul. Is that...?");
+  await say("Daddy", "I have no idea. I didn't know it was in there.");
+  draw(`<rect width="1000" height="600" fill="#f3e7cf"/><path d="M150 60 L850 50 Q870 300 860 550 L140 555 Q125 300 150 60Z" fill="#efe0bd" stroke="#b89a62" stroke-width="4"/>
+    ${[...Array(14)].map((_, k) => `<circle cx="${380 + ((k * 61) % 240)}" cy="${200 + ((k * 43) % 170)}" r="22" fill="#8aa074" opacity=".6"/>`).join("")}
+    ${["moon", "leaf", "spiral", "star", "sun", "wave", "moon", "star"].map((s, k) => sym(s, 500 + 250 * Math.cos(k * Math.PI / 4), 290 + 190 * Math.sin(k * Math.PI / 4), 0.8, "#8a5a36")).join("")}
+    <g id="emblem"><circle cx="760" cy="470" r="44" fill="url(#glowG)"/>${sym("fish", 760, 470, 1.3, "#b5523b")}</g>
+    <text x="500" y="110" text-anchor="middle" font-family="IM Fell English, Georgia, serif" font-style="italic" font-size="24" fill="#5a3b22">To lift the forest's ancient plight, four treasures must be found and unite.</text>`);
+  await say("", "To lift the forest's ancient plight, four treasures must be found and unite.", { verse: true });
+  await tapOn("emblem", "", "Near one edge of the map a small emblem seems, very faintly, to glow. Tap it.");
+  chime();
+  await say("Elin", "Two fish swimming in a circle! That's us! That's the sign for twins!");
+  await say("Daddy", "Strictly speaking, that's Pisces. The twins are Gemini.");
+  await say("Alva", "It's two of something swimming together. It's us.");
+  await say("Daddy", "It's a sign. This quest was meant for the two of you.", { next: "Open the map" });
+};
+
+STORY.witch = async () => {
+  draw(SCENES.path(), cat("sukhi", 520, 520, "walk", 0.9), girl("alva", 440, 540, "alva", { s: 0.9 }), girl("elin", 360, 545, "elin", { s: 0.9 }),
+    adult("dad", 130, 500, "paul", { s: 0.75, cloak: true }), adult("mum", 840, 500, "clarissa", { s: 0.75, flowers: true }), treeRound(150, 520, 240, "#2f5a3f"), treeRound(860, 520, 240, "#2f5a3f"));
+  await say("", "At first light the family set off into the forest. Alva carried the map. Sukhi went ahead with her tail straight up like a flag. Daddy wore an old tattered cloak from the dressing-up box, and Mummy wore a hat with flowers in the band.");
+  await say("Mummy", "We look ridiculous.");
+  await say("Daddy", "We look mysterious. Besides, this is their story. We're the backup crew.");
+  // follow the crescent moons cut into the trees
+  for (let k = 0; k < 3; k++) {
+    const syms = shuffle(["moon", "spiral", "star"]);
+    draw(SCENES.path(), ...[220, 500, 780].map((x, j) => `<g id="tr${j}">${treeRound(x, 470, 330, "#3f6b4b")}<rect x="${x - 26}" y="${330}" width="52" height="52" rx="10" fill="#6a4a32"/>${sym(syms[j], x, 356, 0.9, "#f1dfb0")}</g>`),
+      girl("elin", 440, 580, "elin", { s: 0.7 }), girl("alva", 560, 580, "alva", { s: 0.7 }), cat("sukhi", 500, 590, "sit", 0.7));
+    const ids = [0, 1, 2].map((j) => "tr" + j);
+    for (;;) {
+      const t = await tapOn(ids, "Alva", k === 0 ? "The map says follow the crescent moons cut into the bark. Which tree has the moon?" : ["Another one! Which tree?", "One more. Where's the moon?"][k - 1]);
+      if (syms[+t.slice(2)] === "moon") { chime(); break; }
+      bonk(); setText("Elin", "That's not a moon. Look again!"); await sleep(1300);
+    }
+  }
+  draw(SCENES.clearing(), girl("elin", 300, 560, "elin", { s: 0.9 }), girl("alva", 390, 560, "alva", { s: 0.9 }), cat("sukhi", 470, 560, "sit", 0.8));
+  await say("", "The trees opened onto a small clearing. In the middle stood a crooked cottage with a sagging roof and ivy up its walls, exactly as great-grandfather had drawn it.");
+  await say("Alva", "This is it.");
+  await tapOn("door", "", "Push the door.");
+  draw(SCENES.cottageInside(), `<g class="float">${hatShape(500, 300, 1.2)}</g>`, girl("elin", 300, 560, "elin"), girl("alva", 400, 560, "alva"), cat("sukhi", 180, 560, "sit", 0.9));
+  await say("", "The door creaked open on a dim, dusty room lined with jars: dried herbs, cloudy liquids, things that might once have been beetles. On a pedestal sat a wide-brimmed black hat covered in tiny shimmering stars.");
+  await say("Alva", "The Hat of Pembury.");
+  add(`<g id="witch" transform="translate(720 560)" opacity="0"><path d="M-46 0 L-26 -170 L26 -170 L46 0Z" fill="#4b3a63"/><circle cx="0" cy="-190" r="26" fill="#e8d6c4"/><path d="M-28 -182 Q-30 -224 0 -224 Q30 -224 28 -182 L34 -120 L22 -170 L-22 -170 L-34 -120Z" fill="#c9c4cf"/>
+    <circle cx="-9" cy="-190" r="3.5" fill="#7a3fb0"/><circle cx="9" cy="-190" r="3.5" fill="#7a3fb0"/><path d="M-7 -176 L7 -176" stroke="#2c2420" stroke-width="2"/>
+    <path d="M70 0 L64 -150 L80 -168 L72 -180" stroke="#5a4030" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M26 -120 L66 -110" stroke="#4b3a63" stroke-width="14" stroke-linecap="round"/></g>`);
+  await anim("witch", [{ opacity: 0 }, { opacity: 1 }], 900);
+  await say("The Witch", "Who dares disturb my rest?");
+  await say("Elin", "We're looking for the treasures. To lift the curse on the forest.");
+  await say("The Witch", "And do you think you are worthy? The treasures demand wit, courage and unity. Prove yourselves and the Hat is yours.");
+  await say("", "The floorboards slid aside, and a spiral staircase wound down into the dark.");
+  await say("Elin", "We go down.", { next: "Go down the stairs" });
+
+  draw(SCENES.chamber(), `<g class="float">${hatShape(500, 240, 1.1)}</g>`, girl("elin", 420, 560, "elin", { s: 0.9 }), girl("alva", 540, 560, "alva", { s: 0.9 }), cat("sukhi", 120, 560, "sit", 0.8));
+  await say("The Witch", "To claim the Hat you must first answer a riddle.");
+  await choose("The Witch", "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", [
+    { label: "An echo", ok: true },
+    { label: "A ghost", ok: false, reply: ["The Witch", "A ghost? Ghosts have no business in my riddles. Think again."] },
+    { label: "A parrot", ok: false, reply: ["The Witch", "A parrot has a beak, child. Think again."] },
+    { label: "A drum", ok: false, reply: ["The Witch", "A drum needs hands to play it. Think again."] },
+  ], { verse: false });
+  await say("Alva", "An echo! It's an echo!");
+  await say("The Witch", "Clever. But cleverness alone will not carry you across.");
+
+  // the stepping stones: Alva reads the map, Elin steps
+  const path = shuffle(["star", "moon", "spiral", "leaf", "fish", "sun"]).slice(0, 5);
+  let pos = 0;
+  const stoneScene = () => {
+    const row = shuffle([path[pos], ...shuffle(["star", "moon", "spiral", "leaf", "fish", "sun", "wave"].filter((s) => s !== path[pos])).slice(0, 2)]);
+    draw(SCENES.chamber(), `<g class="float">${hatShape(880, 230, 0.9)}</g>`,
+      ...row.map((s, j) => `<g id="st${j}" data-s="${s}"><ellipse cx="${330 + j * 170}" cy="${372}" rx="62" ry="22" fill="#6d6880"/><ellipse cx="${330 + j * 170}" cy="${364}" rx="62" ry="22" fill="#8c86a3"/>${sym(s, 330 + j * 170, 362, 0.75, "#f6e6b4")}</g>`),
+      girl("elin", 120 + pos * 30, 290, "elin", { s: 0.6 }), girl("alva", 70, 560, "alva", { s: 0.9 }), `<g transform="translate(130 470)"><rect x="-30" y="-22" width="60" height="44" rx="4" fill="#efe0bd"/>${sym(path[pos], 0, 0, 0.7, "#b5523b")}</g>`);
+    return row;
+  };
+  await say("The Witch", "Only one of you may cross. And her steps must be true, or she will fall.");
+  await say("Elin", "I'll go.");
+  await say("Alva", "Not on your own. We do this together. The symbols on the stones match the path on the map. I'll read, and you step where I say.", { next: "Start crossing" });
+  while (pos < path.length) {
+    const row = stoneScene();
+    const name = { star: "Star", moon: "Crescent moon", spiral: "Spiral", leaf: "Leaf", fish: "Two fish", sun: "Sun" }[path[pos]];
+    const t = await tapOn(["st0", "st1", "st2"], "Alva", (pos === 0 ? "Elin, step on the " : "Next: the ") + name.toLowerCase() + ".");
+    if (row[+t.slice(2)] === path[pos]) { chime(); pos++; await moveBy("elin", 60, 0, 350); }
+    else { bonk(); await anim(t, [{ transform: "translateY(0)" }, { transform: "translateY(18px)" }, { transform: "translateY(0)" }], 500); setText("Alva", "Not that one! The " + name.toLowerCase() + ", Elin."); await sleep(1400); }
+  }
+  draw(SCENES.chamber(), hatShape(880, 270, 0.8), girl("elin", 880, 300, "elin", { s: 0.6 }), girl("alva", 140, 560, "alva", { s: 0.9 }), cat("sukhi", 240, 560, "sit", 0.8));
+  await say("", "Stone by stone they went, Alva reading and Elin stepping. At the far side Elin reached up and took the Hat. It was warm in her hands, as though it were alive.");
+  await say("The Witch", "You have proven yourselves, not only in wit, but in trust. The Hat is yours.");
+  await say("Elin", "But the stones have sunk! How do I get back?");
+  add(adult("dad", 320, 560, "paul", { s: 0.85, cloak: true }));
+  await say("Daddy", "You two really are something. Don't worry. We've got this.");
+  add(`<path id="rope" d="M340 470 Q600 420 860 280" stroke="#c9a46a" stroke-width="6" fill="none" stroke-dasharray="14 6"/>`);
+  for (let k = 3; k > 0; k--) {
+    await tapOn("rope", "Daddy", k === 3 ? "Elin's tied the rope round her waist. Everybody pull! Tap the rope." : k === 2 ? "Pull!" : "One more pull!");
+    await moveBy("elin", -170, 50, 400);
+  }
+  giveTreasure("hat");
+  draw(SCENES.chamber(), adult("mum", 200, 560, "clarissa", { flowers: true, s: 0.9 }), adult("dad", 800, 560, "paul", { cloak: true, s: 0.9 }), girl("elin", 430, 560, "elin", { hat: true }), girl("alva", 560, 560, "alva"), cat("sukhi", 660, 560, "sit", 0.8));
+  await say("Mummy", "You were both so brave. And you worked together beautifully.");
+  await say("Daddy", "One down. Three to go.", { next: "Back to the map" });
+};
+
+STORY.squirrel = async () => {
+  const squirrel = (id, x, y, s = 1, freed = false) => `<g id="${id}" transform="translate(${x} ${y}) scale(${s})">
+    <path d="M-10 -10 C-60 -20 -70 -90 -30 -110 C-5 -120 -10 -80 -24 -70" fill="${freed ? "#8e7f72" : "#141218"}" stroke="${freed ? "#8e7f72" : "#141218"}" stroke-width="18" stroke-linejoin="round"/>
+    <ellipse cx="6" cy="-26" rx="22" ry="28" fill="${freed ? "#9a8b7e" : "#1c1a22"}"/><circle cx="16" cy="-62" r="17" fill="${freed ? "#9a8b7e" : "#1c1a22"}"/>
+    <path d="M6 -76 L8 -92 L16 -78Z M20 -78 L28 -92 L28 -74Z" fill="${freed ? "#9a8b7e" : "#1c1a22"}"/>
+    <circle cx="12" cy="-64" r="3.4" fill="${freed ? "#3a2a20" : "#ff3b3b"}"/><circle cx="24" cy="-64" r="3.4" fill="${freed ? "#3a2a20" : "#ff3b3b"}"/>
+    ${freed ? `<ellipse cx="22" cy="-36" rx="7" ry="9" fill="#a86b3a"/>` : `<path d="M14 -50 L16 -40 L18 -50 M22 -50 L24 -40 L26 -50" fill="#fff" stroke="#fff" stroke-width="1"/>`}
+  </g>`;
+  draw(SCENES.grove(), squirrel("sq", 520, 300, 1), girl("elin", 300, 570, "elin", { s: 0.9, hat: false }), girl("alva", 400, 570, "alva", { s: 0.9 }), cat("sukhi", 640, 570, "sit", 0.9),
+    adult("dad", 790, 570, "paul", { s: 0.85, cloak: true }), adult("mum", 120, 570, "clarissa", { s: 0.85, flowers: true }));
+  await say("", "The map led them to a grove of tall pines where the air was oddly still. Something rustled overhead, and Sukhi's ears went flat.");
+  await say("", "A small dark shape came down the trunk in a rush: a squirrel, but glossy black, with eyes as red as rubies and two long white teeth.");
+  await say("Daddy", "That is no ordinary squirrel.");
+  const c = await choose("The Squirrel", "Who seeks the Socks of Pembury? Do you think you can take them from me?", [
+    { label: "Offer it some nuts", value: "nuts" }, { label: "Tell it why you've come", value: "tell" },
+  ], { keepOrder: true });
+  if (c === "nuts") {
+    await say("Mummy", "Perhaps we can negotiate? I have a little bag of nuts...");
+    await say("The Squirrel", "I do not want your pathetic snacks!");
+  }
+  await say("Elin", "We don't want to fight you. We're lifting the curse on the forest. If you let us take the Socks, we help you too.");
+  await say("The Squirrel", "Bold words from such small creatures. Only the clever, the bold and the quick may claim the Socks. Follow, if you dare!", { next: "Follow it" });
+
+  const cavern = (extra = "") => draw(SCENES.cavern(), socksShape(500, 345, 1), extra, girl("elin", 300, 580, "elin", { s: 0.85 }), girl("alva", 700, 580, "alva", { s: 0.85 }), cat("sukhi", 820, 580, "sit", 0.8));
+  cavern(squirrel("sq", 540, 358, 0.8));
+  await say("The Squirrel", "First, wits. Three riddles.");
+  await choose("The Squirrel", "Four legs I have, though I move with none. Close to my master, I serve but one.", [
+    { label: "A chair", ok: true }, { label: "A dog", ok: false, reply: ["Alva", "A dog moves all over the place. It's something that stays still."] },
+    { label: "A horse", ok: false, reply: ["Elin", "Horses gallop! This one doesn't move at all."] },
+  ]);
+  await say("Elin", "A chair!");
+  await choose("The Squirrel", "I can be cracked, made, told and played.", [
+    { label: "A joke", ok: true }, { label: "An egg", ok: false, reply: ["Alva", "You can crack an egg, but can you tell one?"] },
+    { label: "A drum", ok: false, reply: ["Elin", "You can play a drum, but you can't tell one."] },
+  ]);
+  await say("Alva", "A joke!");
+  await choose("The Squirrel", "The more you take, the more you leave behind.", [
+    { label: "Footsteps", ok: true },
+    { label: "Biscuits", ok: false, reply: ["", "Sukhi gave a short meow and walked in a neat circle on the dusty floor, leaving four small prints behind her."] },
+    { label: "Books", ok: false, reply: ["", "Sukhi gave a short meow and walked in a neat circle on the dusty floor, leaving four small prints behind her."] },
+  ]);
+  await say("Elin", "Footsteps!");
+  await say("", "The pedestal glowed. But when the twins stepped towards it, the squirrel snatched up both socks in its mouth and shot up the cavern wall into the dark of the roof.");
+  cavern(squirrel("sq", 820, 120, 0.7));
+  remove("sukhi");
+  const plan = await choose("The Squirrel", "Now, speed! Catch me and they are yours.", [
+    { label: "Chase it!", value: "chase" }, { label: "Make a plan", value: "plan" },
+  ], { keepOrder: true });
+  if (plan === "chase") {
+    await moveBy("sq", -600, 40, 500); await moveBy("sq", 500, 100, 450); await moveBy("sq", -200, -140, 350);
+    await say("Alva", "We can't outrun a squirrel!");
+  }
+  await say("Elin", "So we don't. It has to come down somewhere. There's the tunnel, the middle, and that crack of daylight high in the wall. We put someone at each one.");
+  // ambush: assign each of three to a place
+  const spots = [["tunnel", 110, 470, "the tunnel"], ["middle", 500, 520, "the middle"], ["crack", 856, 190, "the daylight crack"]];
+  const placed = {};
+  const ambushScene = () => {
+    draw(SCENES.cavern(), squirrel("sq", 500, 110, 0.6),
+      ...spots.map(([id, x, y]) => `<g id="spot-${id}"><circle cx="${x}" cy="${y - 40}" r="54" fill="#ffffff" opacity=".12" stroke="#f6e6b4" stroke-width="3" stroke-dasharray="8 8"/></g>`),
+      ...Object.entries(placed).map(([sp, who]) => { const s = spots.find((q) => q[0] === sp); return who === "sukhi" ? cat("p-" + who, s[1], s[2], "sit", 0.8) : girl("p-" + who, s[1], s[2] + 30, who, { s: 0.6 }); }));
+  };
+  const people = [["elin", "Elin"], ["alva", "Alva"], ["sukhi", "Sukhi"]];
+  ambushScene();
+  for (const [who, name] of people) {
+    const free = spots.filter(([id]) => !placed[id]);
+    if (free.length === 1) { placed[free[0][0]] = who; ambushScene(); break; }
+    const t = await tapOn(free.map(([id]) => "spot-" + id), name === "Sukhi" ? "" : name, name === "Sukhi" ? "And where will Sukhi wait? Tap a place." : `Where will ${name} wait? Tap a place.`);
+    placed[t.replace("spot-", "")] = who; ambushScene();
+  }
+  await say("", "What followed was less a chase than a series of ambushes. The squirrel dropped for one way out and found someone waiting; doubled back for another and found someone there too; and came down the wall to find the third.", { next: "Watch" });
+  for (const [id, x, y] of spots) { const [qx, qy] = pos("sq"); await moveBy("sq", x - qx, y - 140 - qy, 600); bonk(); await sleep(250); }
+  { const [qx, qy] = pos("sq"); await moveBy("sq", 500 - qx, 358 - qy, 600); }
+  cavern(squirrel("sq", 540, 358, 0.8) + `<ellipse id="hole" cx="500" cy="350" rx="26" ry="10" fill="#000"/>`);
+  remove("sukhi"); add(cat("sukhi", 820, 580, "sit", 0.8));
+  await say("The Squirrel", "Wits. Quickness. And now, courage. I have dropped the Socks into this dark hollow. Something in there bites. Reach in, if you are bold.");
+  const look = await choose("", "From inside the hollow came a dry scrabbling sound.", [
+    { label: "Reach in quickly", value: "reach" }, { label: "Look carefully first", value: "look" },
+  ], { keepOrder: true });
+  if (look === "reach") await say("", "Elin's hand hovered over the hole. \"Wait,\" said Alva. \"Look at the squirrel.\"");
+  anim(el("sq").firstElementChild, [{ transform: "rotate(0deg)" }, { transform: "rotate(-8deg)" }, { transform: "rotate(0deg)" }], 500, { iterations: 6, transformOrigin: "-10px -10px" });
+  await choose("", "The squirrel's tail was thumping softly against the back of the pedestal, exactly in time with the scrabbling. What is making the noise?", [
+    { label: "A snake", ok: false, reply: ["Alva", "Listen... thump, scrabble, thump, scrabble. Watch its tail."] },
+    { label: "The squirrel's tail", ok: true },
+    { label: "A rat", ok: false, reply: ["Alva", "Listen... thump, scrabble, thump, scrabble. Watch its tail."] },
+  ]);
+  await say("Alva", "It's you. That's your tail!");
+  await say("", "The squirrel's red eyes flicked sideways. The thumping stopped. So did the scrabbling. Elin reached into the hollow and drew out the Socks of Pembury.");
+  giveTreasure("socks");
+  cavern(squirrel("sq", 540, 358, 0.8));
+  await say("The Squirrel", "You have proven yourselves. The Socks are yours, and my curse with them.");
+  const sqEl = el("sq"); sqEl.outerHTML = squirrel("sq", 540, 358, 0.8, true); chime();
+  await say("", "Light wrapped round it, and when the light faded there was a perfectly ordinary grey squirrel sitting on the pedestal, holding an acorn and looking mildly puzzled about everything.");
+  draw(SCENES.cavern(), adult("mum", 220, 580, "clarissa", { flowers: true, s: 0.85 }), girl("elin", 400, 580, "elin", { socks: true }), girl("alva", 520, 580, "alva", { hat: true }), adult("dad", 760, 580, "paul", { cloak: true, s: 0.85 }), cat("sukhi", 620, 580, "sit", 0.8));
+  await say("Mummy", "That was incredible.");
+  await say("Daddy", "Two down. Two to go. And a full set of striped socks. That's a good day by anyone's standards.", { next: "Back to the map" });
+};
+
+STORY.worm = async () => {
+  draw(SCENES.hill(), girl("elin", 300, 580, "elin", { s: 0.85 }), girl("alva", 400, 580, "alva", { s: 0.85 }), cat("sukhi", 520, 580, "sit", 0.8), adult("dad", 720, 580, "paul", { s: 0.85, cloak: true }), adult("mum", 840, 580, "clarissa", { s: 0.85, flowers: true }));
+  await say("Daddy", "The Shield lies underground, guarded by a cursed Giant Worm.");
+  await say("Alva", "What kind of giant worm?");
+  await say("Daddy", "The kind that burrows deep and doesn't like visitors.");
+  rumble();
+  await say("", "The map led them to a rocky hillside where a great smooth-edged hole gaped in the earth, as though something enormous had pushed its way out. From below came a slow rumbling.");
+  await say("Mummy", "Be careful. And remember, Sukhi always finds the way.", { next: "Go down" });
+  for (let k = 0; k < 2; k++) {
+    const sp = rnd(2) ? ["spiral", "wave"] : ["wave", "spiral"];
+    draw(SCENES.tunnel(), `<g id="left"><path d="M120 480 Q140 200 330 190 Q420 200 430 480Z" fill="#070a08"/>${sym(sp[0], 280, 150, 1.2, "#cfe8b0")}</g>`,
+      `<g id="right"><path d="M570 480 Q580 200 670 190 Q860 200 880 480Z" fill="#070a08"/>${sym(sp[1], 720, 150, 1.2, "#cfe8b0")}</g>`,
+      girl("elin", 450, 590, "elin", { s: 0.7 }), girl("alva", 550, 590, "alva", { s: 0.7 }), cat("sukhi", 500, 596, "sit", 0.6));
+    for (;;) {
+      const t = await tapOn(["left", "right"], "Elin", k === 0 ? "The tunnel splits. The map says follow the spiral. Which way?" : "Another fork! Which way does the spiral go?");
+      if (sp[t === "left" ? 0 : 1] === "spiral") { chime(); break; }
+      bonk(); setText("Alva", "That's a wavy line, not a spiral!"); await sleep(1300);
+    }
+  }
+  const worm = (id, x, y, s = 1, look = 0) => `<g id="${id}" transform="translate(${x} ${y}) scale(${s})">
+    ${[...Array(9)].map((_, k) => { const a = Math.PI * (0.15 + k * 0.1), cx = -260 * Math.cos(a) + 40, cy = -60 * k + 20; return `<circle cx="${cx * 0.6}" cy="${cy * 0.55}" r="${70 - k * 2}" fill="${k % 2 ? "#b28a8e" : "#c49ca0"}" stroke="#8a6468" stroke-width="5"/>`; }).join("")}
+    <g transform="translate(${look * 40} -300)"><circle r="66" fill="#c49ca0" stroke="#8a6468" stroke-width="6"/><circle r="38" fill="#3a1418"/>${[...Array(12)].map((_, k) => `<path d="M0 -38 L5 -26 L-5 -26Z" fill="#fff" transform="rotate(${k * 30})"/>`).join("")}</g>
+  </g>`;
+  draw(SCENES.tunnel(), girl("elin", 300, 590, "elin", { s: 0.8 }), girl("alva", 400, 590, "alva", { s: 0.8 }), cat("sukhi", 200, 596, "sit", 0.7));
+  rumble(); await anim(stage, [{ transform: "translate(0,0)" }, { transform: "translate(6px,-4px)" }, { transform: "translate(-6px,4px)" }, { transform: "translate(0,0)" }], 400, { iterations: 3, fill: "none" });
+  add(worm("w", 780, 560, 0.9));
+  add(`<g id="gap"><path d="M40 480 L40 330 Q70 300 100 330 L100 480Z" fill="#040605"/></g>`);
+  await tapOn("gap", "", "The wall burst open and the Worm filled the tunnel, roaring! Quick, into the narrow side-passage! Tap it.");
+  await moveBy("elin", -230, 0, 400);
+  await say("", "Alva pulled Elin into the narrow passage. The Worm drove its head in after them and jammed fast, roaring.");
+  await say("Elin", "This way. The map says we're close!", { next: "Keep going" });
+
+  // the Shield: Alva distracts, Elin pulls
+  let looking = "elin", progress = 0, timer = null;
+  const room = () => draw(SCENES.shieldRoom(), shieldShape(560, 470, 0.9), worm("w", 820, 600, 0.95, looking === "alva" ? -1 : 0), girl("alva", 160, 590, "alva", { s: 0.85 }), girl("elin", 470, 590, "elin", { s: 0.85 }), cat("sukhi", 260, 596, "sit", 0.7));
+  room();
+  await say("", "In the middle of a great chamber the Shield of Pembury stood embedded in the earth, glowing soft blue. Then the wall behind them exploded and the Worm poured in, rearing up.");
+  await say("Elin", "It isn't evil. It's cursed, like the squirrel.");
+  await say("Alva", "Then maybe the Shield breaks the curse.");
+  await say("Elin", "Cover me!", { next: "Ready" });
+  setText("", "Alva throws rocks to make the Worm look at her. While it is looking at Alva, Elin pulls the Shield. Work together!");
+  const a = clearActions(); a.className = "actions split";
+  a.innerHTML = `<div class="side" style="--c:var(--alva)"><h3>Alva</h3><div class="row" id="alvaRow"></div></div><div class="side" style="--c:var(--elin)"><h3>Elin</h3><div class="row" id="elinRow"></div><div class="meter"><i id="meter"></i></div></div>`;
+  const rock = button("Throw a rock", "big alva"), pull = button("Pull the Shield", "big elin");
+  $("alvaRow").append(rock); $("elinRow").append(pull);
+  await new Promise((res) => {
+    rock.onclick = () => {
+      bonk(); looking = "alva"; room(); clearTimeout(timer);
+      setText("Alva", "Over here, you big wriggler!");
+      timer = setTimeout(() => { looking = "elin"; room(); setText("", "The Worm's head is swinging back towards Elin. Alva, throw another rock!"); }, 3500);
+    };
+    pull.onclick = () => {
+      if (looking !== "alva") { bonk(); setText("Elin", "It's watching me! Alva, distract it!"); return; }
+      progress++; $("meter").style.width = (progress / 6) * 100 + "%"; bell([392 + progress * 60], 0.1, 0.15);
+      setText("Elin", ["Heave!", "It's moving!", "Nearly...", "Pull!", "Almost out!", "YES!"][progress - 1]);
+      if (progress >= 6) { clearTimeout(timer); res(); }
+    };
+  });
+  draw(SCENES.shieldRoom(), `<circle cx="500" cy="380" r="400" fill="url(#glowB)"/>`, shieldShape(470, 470, 1), worm("w", 820, 600, 0.95), girl("alva", 160, 590, "alva", { s: 0.85 }), girl("elin", 470, 590, "elin", { s: 0.85 }));
+  chime();
+  await anim("w", [{ opacity: 1, transform: "translate(820px,600px) scale(.95)" }, { opacity: 1, transform: "translate(820px,600px) scale(.05)" }], 1600);
+  remove("w");
+  add(`<path id="earthworm" d="M760 580 q12 -10 24 0 t24 0 t24 0" stroke="#e9a3a0" stroke-width="9" fill="none" stroke-linecap="round"/>`);
+  giveTreasure("shield");
+  await say("", "The Shield came free in a burst of light. The Worm's roar dropped to a long, low, mournful sound, and it shrank, plate by plate, until there on the floor lay one small pink earthworm, wiggling in what was clearly gratitude.");
+  draw(SCENES.hill(), adult("mum", 200, 580, "clarissa", { flowers: true, s: 0.85 }), girl("elin", 380, 580, "elin", { socks: true }), shieldShape(380, 500, 0.5, false), girl("alva", 500, 580, "alva", { hat: true }), adult("dad", 760, 580, "paul", { cloak: true, s: 0.85 }), cat("sukhi", 610, 580, "sit", 0.8));
+  await say("Elin", "The Worm wasn't bad either. It was just trapped.");
+  await say("Alva", "They all were. The Witch, the squirrel, the Worm. The forest's magic caught them, and we're letting them out.");
+  await say("Daddy", "Three down. One to go.", { next: "Back to the map" });
+};
+
+STORY.swords = async () => {
+  draw(SCENES.arch(), girl("elin", 400, 580, "elin", { s: 0.8 }), girl("alva", 600, 580, "alva", { s: 0.8 }), adult("mum", 180, 580, "clarissa", { s: 0.8, flowers: true }), adult("dad", 820, 580, "paul", { s: 0.8, cloak: true }), cat("sukhi", 500, 590, "walk", 0.8));
+  await say("", "The path to the heart of the forest narrowed until the trees closed overhead like clasped hands. They came to a clearing marked by a tall archway of twisted branches.");
+  await say("Mummy", "Look at the carvings. They're in pairs. Two shields. Two hats. Two socks.");
+  await say("Elin", "We've only got one of each.");
+  await say("Daddy", "Maybe that's the test. If this last one is about unity, perhaps you have to share what you've got.");
+  await moveBy("sukhi", 0, -110, 900);
+  stage.querySelectorAll(".rune").forEach((r) => { r.setAttribute("opacity", "1"); r.classList.add("twinkle"); });
+  chime();
+  await say("The Forest", "To claim the Swords of Pembury you must complete the circle. Only by joining your strength will the path be revealed.", { verse: true });
+  const hatTo = await choose("", "Who will wear the Hat?", [{ label: "Alva", value: "alva" }, { label: "Elin", value: "elin" }], { keepOrder: true });
+  await choose("", "And the Socks?", [
+    { label: "One sock each", ok: true },
+    { label: "Both for Elin", ok: false, reply: ["Mummy", "Remember the carvings. Everything comes in pairs. Share them."] },
+    { label: "Both for Alva", ok: false, reply: ["Mummy", "Remember the carvings. Everything comes in pairs. Share them."] },
+  ], { keepOrder: true });
+  draw(SCENES.arch(), girl("elin", 420, 580, "elin", { s: 0.8, hat: hatTo === "elin", socks: true }), girl("alva", 580, 580, "alva", { s: 0.8, hat: hatTo === "alva", socks: true }), shieldShape(500, 470, 0.6), cat("sukhi", 500, 480, "sit", 0.7));
+  await together("Now lift the Shield together, one hand each.", "Lift", "Lift");
+  draw(SCENES.arch(), `<circle cx="500" cy="440" r="300" fill="url(#glowG)"/>`, girl("elin", 420, 580, "elin", { s: 0.8, hat: true, socks: true }), girl("alva", 580, 580, "alva", { s: 0.8, hat: true, socks: true }), shieldShape(500, 470, 0.7));
+  chime();
+  await say("", "The treasures grew warm. The air shimmered. And then there were two hats, and four socks, and the Shield's glow spread out into a perfect circle between the twins' hands.");
+  await say("The Forest", "The forest's power lies not in strength alone but in harmony. Together, the path is clear.", { verse: true });
+  const guardian = `<g id="guardian" transform="translate(500 470)"><path d="M-60 0 L-40 -260 L40 -260 L60 0Z" fill="#6b4f3b"/><path d="M-40 -200 Q0 -180 40 -200 M-44 -140 Q0 -120 44 -140 M-50 -80 Q0 -60 50 -80" stroke="#4a3426" stroke-width="5" fill="none"/>
+    <circle cx="0" cy="-300" r="56" fill="#7d5f48"/><circle cx="-60" cy="-340" r="40" fill="#4f7f45"/><circle cx="0" cy="-370" r="48" fill="#5d8f50"/><circle cx="60" cy="-340" r="40" fill="#4f7f45"/>
+    <circle cx="-18" cy="-300" r="7" fill="#ffd27a"/><circle cx="18" cy="-300" r="7" fill="#ffd27a"/>
+    <path d="M110 0 L104 -320" stroke="#5a4030" stroke-width="10" stroke-linecap="round"/><path d="M104 -320 q20 40 -10 80 q-20 40 10 90 q20 40 -6 80" stroke="#6faa5a" stroke-width="5" fill="none"/></g>`;
+  draw(SCENES.arch(), guardian, girl("elin", 260, 590, "elin", { s: 0.75, hat: true, socks: true }), girl("alva", 740, 590, "alva", { s: 0.75, hat: true, socks: true }), cat("sukhi", 370, 596, "sit", 0.7));
+  await say("", "The barrier dissolved, and the Forest Guardian stepped through. It was taller than the trees, with skin like bark and a staff wound about with living vines.");
+  await say("The Guardian", "You have proven strength, wit and courage. But unity is more than sharing power. You must act as one. Retrieve the Swords together. Should one of you falter, both fail.", { next: "Enter the maze" });
+
+  // the maze: both must choose the same symbol
+  const forks = [
+    { pair: ["moon", "star"], right: "moon", clue: "Two symbols glow on the floor. Sukhi trots forward and sits, very deliberately, on one of them. Both of you choose." },
+    { pair: ["sun", "moon"], right: "sun", clue: "The next fork. A whisper in the leaves: \"Choose the one that shines in the daytime.\"" },
+    { pair: ["spiral", "fish"], right: "fish", clue: "The paths light up as a spiral and a pair of fish. Which one is like the two of you?" },
+    { pair: ["square", "circle"], right: "circle", clue: "The last fork. \"Choose the shape that has no corners, like a circle of friends.\"" },
+  ];
+  for (let k = 0; k < forks.length; k++) {
+    const f = forks[k];
+    draw(SCENES.maze(), sym(f.pair[0], 380, 470, 1.6, "#bfe8ff"), sym(f.pair[1], 620, 470, 1.6, "#bfe8ff"), girl("elin", 300, 590, "elin", { s: 0.6, hat: true }), girl("alva", 700, 590, "alva", { s: 0.6, hat: true }),
+      k === 0 ? cat("sukhi", f.pair.indexOf("moon") ? 620 : 380, 450, "sit", 0.7) : "");
+    await bothChoose(f.clue, f.pair, f.right);
+  }
+  draw(SCENES.maze(), girl("elin", 400, 560, "elin", { s: 0.7, hat: true }), girl("alva", 600, 560, "alva", { s: 0.7, hat: true }));
+  await anim(stage, [{ transform: "rotate(0deg)" }, { transform: "rotate(-3deg)" }, { transform: "rotate(0deg)" }], 900, { fill: "none" });
+  await together("The floor tilts! Step together: one, two, three... JUMP!", "Jump!", "Jump!", true);
+  draw(SCENES.maze(), `<rect x="490" y="200" width="20" height="400" fill="#7fd6ff" opacity=".85"/>`, girl("elin", 330, 580, "elin", { s: 0.7, hat: true }), girl("alva", 670, 580, "alva", { s: 0.7, hat: true }), sym("rings", 500, 160, 1.6, "#ffd27a"));
+  await say("Alva", "Elin?");
+  await say("Elin", "I'm here! I can't see you!");
+  await say("Alva", "Look, two circles, joined together. Follow the circles. We find each other.", { next: "Follow them" });
+  await bothChoose("Each of you, find the joined circles.", shuffle(["rings", "triangle", "square"]), "rings", true);
+  draw(SCENES.maze(), `<circle cx="500" cy="420" r="260" fill="url(#glowG)"/>`, swordsShape(500, 360, 1.3), girl("elin", 430, 580, "elin", { s: 0.8, hat: true }), girl("alva", 570, 580, "alva", { s: 0.8, hat: true }));
+  chime();
+  await say("The Guardian", "Unity is not only walking the same path. It is finding each other when you are lost.", { verse: true });
+  await together("The Swords hang side by side. Take a hilt each.", "Take a sword", "Take a sword");
+  giveTreasure("swords");
+  draw(SCENES.edge(), girl("elin", 400, 580, "elin", { s: 0.9 }), girl("alva", 600, 580, "alva", { s: 0.9 }), swordsShape(350, 470, 0.6), swordsShape(650, 470, 0.6), adult("mum", 190, 580, "clarissa", { s: 0.85, flowers: true }), adult("dad", 810, 580, "paul", { s: 0.85, cloak: true }), cat("sukhi", 500, 590, "sit", 0.8));
+  await say("The Guardian", "You have lifted the last curse. The forest is free.");
+  await say("", "The Hat, the Socks and the Shield rose into the air, glowed once and were gone. The Swords remained, cool in the twins' hands. Around the clearing the forest woke: the Witch stood radiant among the trees, a brown-eyed squirrel bounded past, and somewhere in the soft earth an earthworm was, presumably, very happy.");
+  await say("Mummy", "You did it.", { next: "Next morning" });
+};
+
+// both twins must press their own button (multi-touch, two clicks, or the E and A keys)
+function together(text, labelE, labelA, quick = false) {
+  setText("", text);
+  const a = clearActions(); a.className = "actions split";
+  a.innerHTML = `<div class="side" style="--c:var(--elin)"><h3>Elin</h3><div class="row" id="eRow"></div></div><div class="side" style="--c:var(--alva)"><h3>Alva</h3><div class="row" id="aRow"></div></div>`;
+  const e = button(labelE, "big elin"), al = button(labelA, "big alva");
+  $("eRow").append(e); $("aRow").append(al);
+  return new Promise((res) => {
+    let te = 0, ta = 0;
+    const check = () => {
+      if (te && ta && Math.abs(te - ta) < (quick ? 1500 : 4000)) { chime(); document.removeEventListener("keydown", keys); res(); }
+      else if (te && ta) { bonk(); te = ta = 0; e.classList.remove("chosen"); al.classList.remove("chosen"); setText("", "Not quite together! Try again, at the same moment."); }
+    };
+    const hit = (who) => {
+      if (who === "e") { te = performance.now(); e.classList.add("chosen"); } else { ta = performance.now(); al.classList.add("chosen"); }
+      setTimeout(check, 30);
+      setTimeout(() => { const now = performance.now(); if (who === "e" && !ta && now - te > (quick ? 1500 : 4000)) { te = 0; e.classList.remove("chosen"); } if (who === "a" && !te && now - ta > (quick ? 1500 : 4000)) { ta = 0; al.classList.remove("chosen"); } }, quick ? 1600 : 4100);
+    };
+    e.onpointerdown = (ev) => { ev.preventDefault(); hit("e"); };
+    al.onpointerdown = (ev) => { ev.preventDefault(); hit("a"); };
+    e.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") hit("e"); };
+    al.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") hit("a"); };
+    const keys = (ev) => { if (ev.key === "e" || ev.key === "E") hit("e"); if (ev.key === "a" || ev.key === "A") hit("a"); };
+    document.addEventListener("keydown", keys);
+  });
+}
+// each twin picks on her own side; they must agree, and be right
+function bothChoose(text, pair, right, eachAlone = false) {
+  setText("", text);
+  const a = clearActions(); a.className = "actions split";
+  a.innerHTML = `<div class="side" style="--c:var(--elin)"><h3>Elin</h3><div class="row" id="eRow"></div></div><div class="side" style="--c:var(--alva)"><h3>Alva</h3><div class="row" id="aRow"></div></div>`;
+  return new Promise((res) => {
+    const pick = { e: null, a: null }, btns = { e: [], a: [] };
+    for (const who of ["e", "a"]) for (const s of pair) {
+      const b = button("", "big " + (who === "e" ? "elin" : "alva"), icon(s));
+      b.setAttribute("aria-label", s); if (s === right) b.dataset.ok = "1";
+      b.onclick = () => {
+        pick[who] = s; btns[who].forEach((x) => x.classList.toggle("chosen", x === b));
+        if (eachAlone && s !== right) { bonk(); b.classList.add("wrong"); pick[who] = null; setTimeout(() => b.classList.remove("chosen", "wrong"), 400); return; }
+        if (pick.e && pick.a) {
+          if (pick.e === pick.a && pick.e === right) { chime(); setTimeout(res, 500); }
+          else {
+            bonk();
+            setText("The Forest", pick.e !== pick.a ? "The two paths flicker and fade. You chose different ways! Choose together." : "The path dims under your feet. That isn't the way. Try again, together.");
+            setTimeout(() => { pick.e = pick.a = null; btns.e.concat(btns.a).forEach((x) => x.classList.remove("chosen")); }, 900);
+          }
+        }
+      };
+      btns[who].push(b); $(who === "e" ? "eRow" : "aRow").append(b);
+    }
+  });
+}
+
+STORY.epilogue = async () => {
+  draw(SCENES.kitchen(), adult("mum", 230, 470, "clarissa"), girl("elin", 400, 470, "elin"), girl("alva", 510, 470, "alva"), adult("dad", 720, 470, "paul"), SCENES.table(),
+    `<g transform="translate(400 382)">${sym("fish", 0, -6, 0.45, "#d9a441")}</g><g transform="translate(510 382)">${sym("fish", 0, -6, 0.45, "#d9a441")}</g>`,
+    `<ellipse cx="560" cy="560" rx="70" ry="18" fill="#c8664a"/>${cat("sukhi", 560, 552, "sit", 1)}`);
+  await say("", "The next morning the house was quiet, almost as though it were listening. The map had vanished in the night, its work done. But the forest beyond the window looked different: the light between the trees had a golden edge to it.");
+  await say("Daddy", "To the bravest twins Pembury has ever seen.");
+  await say("Mummy", "And to Sukhi, the most courageous cat in all of Kent.");
+  await say("", "Around each twin's neck, on a leather cord, hung a small carved figure they had found in the grass after claiming the Swords: two fish, swimming in a circle.");
+  await say("Alva", "Do you think the forest will need us again?");
+  await say("Daddy", "Who knows. Magic has a way of calling when you least expect it.");
+  draw(SCENES.edge(), girl("elin", 440, 580, "elin", { s: 0.9, flip: true }), girl("alva", 540, 580, "alva", { s: 0.9, flip: true }), adult("mum", 320, 580, "clarissa", { s: 0.9 }), adult("dad", 660, 580, "paul", { s: 0.9 }), cat("sukhi", 600, 590, "sit", 0.8));
+  await say("", "That afternoon they walked to the edge of the forest. For a moment Elin thought she saw something between the trunks: a glimmer, like a pair of eyes watching from a long way off.");
+  await say("Alva", "It's the forest. It remembers us.");
+  await say("Mummy", "It always will.", { next: "The end" });
+};
+
+async function theEnd() {
+  draw(`<rect width="1000" height="600" fill="#1f3a2e"/><circle cx="500" cy="250" r="200" fill="url(#glowG)"/>${swordsShape(500, 250, 1.6)}
+    <text x="500" y="480" text-anchor="middle" font-family="IM Fell English SC, Georgia, serif" font-size="54" fill="#f8f1e1">The End of Book One</text>
+    <text x="500" y="530" text-anchor="middle" font-family="IM Fell English, Georgia, serif" font-style="italic" font-size="26" fill="#d9a441">Next: Elin, Alva and the Alien Visitor</text>`);
+  setText("", "Well done, Elin and Alva. You found all four treasures, and you did it together.");
+  const a = clearActions();
+  const again = button("Play again", "primary"); again.onclick = () => play("morning"); a.append(again);
+}
+
+// ------------------------------------------------------------------ title page
+function title() {
+  draw(SCENES.edge(), `<rect width="1000" height="600" fill="#1f3a2e" opacity=".25"/>`, girl("elin", 430, 560, "elin"), girl("alva", 560, 560, "alva"), cat("sukhi", 650, 566, "sit", 0.9),
+    `<g class="float">${swordsShape(500, 170, 1)}</g>`,
+    `<rect x="190" y="270" width="620" height="88" rx="14" fill="#f8f1e1" opacity=".92"/><text x="500" y="332" text-anchor="middle" font-family="IM Fell English SC, Georgia, serif" font-size="58" fill="#2c2420">The Swords of Pembury</text>`);
+  setText("", "A Pembury Chronicles adventure for Elin and Alva, to play together. One of you can be Elin and one of you Alva: when you see your name on a button, that one is yours.");
+  const a = clearActions();
+  const s = saved();
+  const go = button("Begin the adventure", "primary"); go.onclick = () => { bell([523, 659, 784], 0.12, 0.12); play("morning"); }; a.append(go);
+  if (s && s !== "morning") {
+    const name = (CHAPTERS.find((c) => c[0] === s) || [s, s])[1];
+    const cont = button("Carry on from " + name); cont.onclick = () => play(s); a.append(cont);
+  }
+}
+renderTreasures();
+title();
+</script>
+
+</html>
