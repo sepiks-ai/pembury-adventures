@@ -98,6 +98,7 @@ button:disabled { opacity: .45; cursor: default; }
     <div class="row" id="scenes"></div>
     <p class="label">Extras</p>
     <div class="row">
+      <button id="rigBtn" type="button">Arms and legs</button>
       <button id="eyes" type="button" aria-pressed="false">Googly eyes</button>
       <button id="record" type="button">Make a video</button>
       <button id="remove" type="button">Take one away</button>
@@ -117,6 +118,17 @@ button:disabled { opacity: .45; cursor: default; }
     <button id="together" type="button" aria-pressed="false" hidden>Keep them together</button>
     <button id="cancelCut" type="button">Cancel</button>
     <button id="useIt" class="big" type="button">Use it!</button>
+  </div>
+</dialog>
+
+<dialog id="rigDlg">
+  <h2>Arms and legs</h2>
+  <p class="label" style="margin:0 0 8px">Drag the dots onto the head, the hands and the feet.</p>
+  <div class="check"><canvas id="rigCanvas" style="touch-action:none"></canvas></div>
+  <div class="row" style="margin-top:12px">
+    <button id="rigNext" type="button">Next drawing</button>
+    <button id="rigNone" type="button">No arms and legs</button>
+    <button id="rigDone" class="big" type="button">Done!</button>
   </div>
 </dialog>
 
@@ -282,8 +294,8 @@ function cutOut(img, tol, keepPaper) {
       if (x > 0) push(k - 1); if (x < w - 1) push(k + 1); if (y > 0) push(k - w); if (y < h - 1) push(k + w);
     }
     for (let k = 0; k < N; k++) mask[k] = outside[k] ? 0 : 1;
-    // remove specks smaller than 0.15% of the picture
-    const lab = new Int32Array(N), minSize = Math.max(30, N * 0.0015); let next = 1;
+    // remove specks smaller than 0.03% of the picture (a thin pencil arm can be quite small)
+    const lab = new Int32Array(N), minSize = Math.max(30, N * 0.0003); let next = 1;
     for (let k0 = 0; k0 < N; k0++) {
       if (!mask[k0] || lab[k0]) continue;
       const comp = []; sp = 0; stack[sp++] = k0; lab[k0] = next;
@@ -466,14 +478,126 @@ const EFFECTS = {
     } },
   disco: { label: "Disco", c: "#ffe9a8", sfx: "sparkle",
     pose: (c, t) => { const b = Math.abs(Math.sin(t * 4 + c.ph)); c.y = c.homeY - b * 40; c.rot = 0.2 * Math.sin(t * 4 + c.ph); c.hue = (t * 220) % 360; } },
+  wave: { label: "Wave hello", c: "#ffe0d0", sfx: "blip", limbs: true,
+    pose: (c, t) => { c.y = c.homeY - Math.abs(Math.sin(t * 2 + c.ph)) * 10; } },
+  starjump: { label: "Star jumps", c: "#e6f7c8", sfx: "boing", limbs: true,
+    pose: (c, t) => { const p = Math.abs(Math.sin(t * 3 + c.ph)); c.y = c.homeY - p * 90; } },
+  headbang: { label: "Head bang", c: "#ead9ff", sfx: "stomp", limbs: true,
+    pose: (c, t) => { c.y = c.homeY - Math.abs(Math.sin(t * 5 + c.ph)) * 12; } },
   party: { label: "Party!", c: "#ffffff", sfx: "sparkle" },
 };
-const PARTY = ["jelly", "dance", "walk", "spin", "explode", "melt", "rocket", "flag", "giant", "twist", "disco"];
+const PARTY = ["jelly", "dance", "walk", "spin", "explode", "melt", "rocket", "flag", "giant", "twist", "disco", "wave", "starjump", "headbang"];
+for (const [k, e] of Object.entries(EFFECTS)) e.key = k;
+// moves that need arms and legs: a drawing without a skeleton dances instead
+const LIMB_MOVES = new Set(["wave", "starjump", "headbang"]);
+
+// ------------------------------------------------------------------ the skeleton
+// five dots (head, two hands, two feet) give a neck, shoulders, a spine and hips; each point of the
+// drawing follows the bones nearest to it, so arms swing, legs step and heads nod
+function alphaOf(img) {
+  if (!img.alpha) { const d = img.getContext("2d").getImageData(0, 0, img.width, img.height).data, a = new Uint8Array(img.width * img.height); for (let k = 0; k < a.length; k++) a[k] = d[k * 4 + 3] > 100 ? 1 : 0; img.alpha = a; }
+  return img.alpha;
+}
+// walk from the end of a limb towards the body, measuring how thick the drawing is across the limb;
+// the joint is where it suddenly gets much thicker (where an arm meets a body). null if it never does.
+function findJoint(img, end, base) {
+  const a = alphaOf(img), w = img.width, h = img.height, on = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < w && y < h && a[y * w + x]; };
+  const L = Math.hypot(base[0] - end[0], base[1] - end[1]); if (L < 4) return null;
+  const ux = (base[0] - end[0]) / L, uy = (base[1] - end[1]) / L, nx = -uy, ny = ux, step = Math.max(1, L / 120), maxT = Math.max(w, h) * 0.6;
+  const thick = [];
+  for (let d = 0; d <= L; d += step) {
+    const x = end[0] + ux * d, y = end[1] + uy * d;
+    let t = 0; if (on(x, y)) { t = 1; for (let k = 1; k < maxT && on(x + nx * k, y + ny * k); k++) t++; for (let k = 1; k < maxT && on(x - nx * k, y - ny * k); k++) t++; }
+    thick.push([d, t]);
+  }
+  const near = thick.slice(Math.floor(thick.length * 0.1), Math.max(2, Math.floor(thick.length * 0.4))).map((q) => q[1]).filter((t) => t > 0).sort((p, q) => p - q);
+  if (!near.length) return null;
+  const ref = near[near.length >> 1], limit = Math.max(ref * 2.6, ref + Math.max(w, h) * 0.06);
+  for (let i = Math.floor(thick.length * 0.2); i < thick.length - 1; i++)
+    if (thick[i][1] > limit && thick[i + 1][1] > limit) { const d = Math.max(0, thick[i][0] - step * 2); return [end[0] + ux * d, end[1] + uy * d]; }
+  return null;
+}
+function joints(r, img) {
+  const feetY = (r.LF[1] + r.RF[1]) / 2, hip = [(r.LF[0] + r.RF[0]) / 2 * 0.6 + r.H[0] * 0.4, r.H[1] + (feetY - r.H[1]) * 0.62];
+  const chest = [hip[0] * 0.5 + r.H[0] * 0.5, r.H[1] + (hip[1] - r.H[1]) * 0.42];
+  const along = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const joint = (end, base, k) => (img && findJoint(img, end, base)) || along(base, end, k);
+  const neck = img ? findJoint(img, r.H, chest) : null;               // a round creature has no neck: its head stays put
+  return {
+    hip, chest, noHead: !!img && !neck,
+    bones: {                                                           // [pivot, end]
+      spine: [hip, chest], head: [neck || along(chest, r.H, 0.35), r.H],
+      la: [joint(r.LH, chest, 0.35), r.LH], ra: [joint(r.RH, chest, 0.35), r.RH],
+      ll: [joint(r.LF, hip, 0.25), r.LF], rl: [joint(r.RF, hip, 0.25), r.RF],
+    },
+  };
+}
+function guessRig(img) {
+  const w = img.width, h = img.height, d = img.getContext("2d").getImageData(0, 0, w, h).data;
+  const on = (x, y) => d[(y * w + x) * 4 + 3] > 100;
+  let top = h, bot = 0;
+  for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (on(x, y)) { if (y < top) top = y; if (y > bot) bot = y; }
+  const hh = bot - top || 1, band = (y0, y1) => { const pts = []; for (let y = Math.round(y0); y < y1; y += 2) for (let x = 0; x < w; x += 2) if (on(x, y)) pts.push([x, y]); return pts; };
+  const mean = (pts) => pts.length ? [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length] : [w / 2, h / 2];
+  const head = mean(band(top, top + hh * 0.18));
+  const feet = band(bot - hh * 0.12, bot + 1), fx = feet.map((p) => p[0]).sort((a, b) => a - b), mid = fx.length ? fx[fx.length >> 1] : w / 2;
+  let LF = mean(feet.filter((p) => p[0] <= mid)), RF = mean(feet.filter((p) => p[0] > mid));
+  if (Math.abs(RF[0] - LF[0]) < w * 0.12) { LF = [mid - w * 0.08, bot - hh * 0.05]; RF = [mid + w * 0.08, bot - hh * 0.05]; }
+  const body = band(top + hh * 0.1, top + hh * 0.7);
+  let LH = [w * 0.15, top + hh * 0.45], RH = [w * 0.85, top + hh * 0.45];
+  if (body.length) {
+    const l = body.reduce((a, p) => (p[0] < a[0] ? p : a)), r = body.reduce((a, p) => (p[0] > a[0] ? p : a));
+    LH = [l[0] + w * 0.04, l[1]]; RH = [r[0] - w * 0.04, r[1]];
+  }
+  return { H: head, LH, RH, LF, RF };
+}
+const rotAbout = (p, c, a) => { const dx = p[0] - c[0], dy = p[1] - c[1], cs = Math.cos(a), sn = Math.sin(a); return [c[0] + dx * cs - dy * sn, c[1] + dx * sn + dy * cs]; };
+function segDist(p, a, b) {
+  const vx = b[0] - a[0], vy = b[1] - a[1], k = clamp(((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (vx * vx + vy * vy || 1), 0, 1);
+  return Math.hypot(p[0] - a[0] - vx * k, p[1] - a[1] - vy * k);
+}
+// angles for each bone for a move at time t (side: which way "up" is for each arm and "out" for each leg)
+function limbPose(c, key, t) {
+  const r = c.rig, j = c.joints, up = (hand) => (hand[0] < j.chest[0] ? 1 : -1), out = (foot) => (foot[0] < j.hip[0] ? 1 : -1);
+  const s = (k, f = 1) => Math.sin(t * k * f + c.ph), A = { spine: 0, head: 0, la: 0, ra: 0, ll: 0, rl: 0 };
+  if (c.showOff > t) key = "starjump";
+  const headOK = !j.noHead;
+  if (key === "wave") { A.ra = up(r.RH) * (1.5 + 0.35 * s(8)); A.head = 0.18 * s(2); A.la = up(r.LH) * 0.15 * s(2); }
+  else if (key === "starjump") { const p = Math.abs(Math.sin(t * 3 + c.ph)); A.la = up(r.LH) * 1.5 * p; A.ra = up(r.RH) * 1.5 * p; A.ll = out(r.LF) * 0.35 * p; A.rl = out(r.RF) * 0.35 * p; }
+  else if (key === "headbang") { A.head = 0.45 * s(10); A.spine = 0.08 * s(10); A.la = up(r.LH) * (1.3 + 0.2 * s(10)); A.ra = up(r.RH) * (1.3 + 0.2 * s(10)); }
+  else if (key === "walk") { A.ll = 0.45 * s(9); A.rl = -0.45 * s(9); A.la = -0.35 * s(9); A.ra = -0.35 * s(9); A.head = 0.06 * s(9); }
+  else if (key === "dance") { A.la = up(r.LH) * (0.8 + 0.7 * s(3.4)); A.ra = up(r.RH) * (0.8 - 0.7 * s(3.4)); A.ll = 0.25 * s(6.8); A.rl = -0.25 * s(6.8); A.head = 0.25 * s(3.4); }
+  else if (key === "disco") { A.la = 0.7 * s(4); A.ra = 0.7 * s(4); A.spine = -0.12 * s(4); A.head = -0.2 * s(4); A.ll = 0.12 * s(8); A.rl = -0.12 * s(8); }
+  else return null;
+  if (!headOK) A.head = 0;
+  return A;
+}
+// the bend: each point follows a blend of the bones near it
+function rigWarp(u, v, t, c) {
+  const iw = c.img.width, ih = c.img.height, p = [u * iw, v * ih], A = c.limbs, b = c.joints.bones, eps = Math.max(iw, ih) * 0.03;
+  const spineT = (q) => rotAbout(q, b.spine[0], A.spine);
+  const T = {
+    spine: spineT(p), head: spineT(rotAbout(p, b.head[0], A.head)),
+    la: spineT(rotAbout(p, b.la[0], A.la)), ra: spineT(rotAbout(p, b.ra[0], A.ra)),
+    ll: rotAbout(p, b.ll[0], A.ll), rl: rotAbout(p, b.rl[0], A.rl),
+  };
+  let x = 0, y = 0, sum = 0, m = eps * 1.2;
+  for (const k in T) {
+    const d = segDist(p, b[k][0], b[k][1]) + eps; let w = 1 / (d * d * d * d);
+    if (k !== "spine") {                                               // a limb only moves what lies beyond its joint
+      const [a, e] = b[k], L = Math.hypot(e[0] - a[0], e[1] - a[1]) || 1, along = ((p[0] - a[0]) * (e[0] - a[0]) + (p[1] - a[1]) * (e[1] - a[1])) / L;
+      const f = clamp((along + m) / (2 * m), 0, 1); w *= f * f * (3 - 2 * f) + 1e-6;
+    }
+    x += T[k][0] * w; y += T[k][1] * w; sum += w;
+  }
+  return [(x / sum - p[0]) / iw, (y / sum - p[1]) / ih];
+}
+function setRig(c, r) { c.rig = r; c.joints = r ? joints(r, c.img) : null; }
 function effectFor(c, t) {
-  if (effect !== "party") return EFFECTS[effect];
+  if (effect !== "party") return LIMB_MOVES.has(effect) && !c.rig ? EFFECTS.dance : EFFECTS[effect];
   const k = Math.floor((t + c.ph * 3) / 5), name = PARTY[(k * 7 + creatures.indexOf(c) * 3) % PARTY.length];
   if (c.mine !== name) { c.mine = name; c.wx = null; }
-  return EFFECTS[name];
+  return LIMB_MOVES.has(name) && !c.rig ? EFFECTS.dance : EFFECTS[name];
 }
 
 // ------------------------------------------------------------------ drawing: a bent picture is drawn as a mesh of triangles
@@ -503,6 +627,19 @@ function tri(img, s0, s1, s2, d0, d1, d2) {
   }
   ctx.restore();
 }
+// which cells of the mesh have any drawing in them (empty ones are skipped)
+function cellsUsed(c, G) {
+  c.cellCache = c.cellCache || {};
+  if (c.cellCache[G]) return c.cellCache[G];
+  const iw = c.img.width, ih = c.img.height, d = c.img.getContext("2d").getImageData(0, 0, iw, ih).data, out = new Uint8Array(G * G);
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    let any = 0;
+    for (let y = Math.floor(j * ih / G); y < Math.min(ih, Math.ceil((j + 1) * ih / G) + 1) && !any; y += 2)
+      for (let x = Math.floor(i * iw / G); x < Math.min(iw, Math.ceil((i + 1) * iw / G) + 1); x += 2) if (d[(y * iw + x) * 4 + 3] > 8) { any = 1; break; }
+    out[j * G + i] = any;
+  }
+  return (c.cellCache[G] = out);
+}
 function drawCreature(c, t, warp) {
   if (canFilter && c.hue) ctx.filter = `hue-rotate(${c.hue}deg) saturate(1.6)`;
   ctx.globalAlpha = c.alpha;
@@ -510,10 +647,11 @@ function drawCreature(c, t, warp) {
     const [w, h] = size(c);
     ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot); ctx.scale(c.sx, c.sy); ctx.drawImage(c.img, -w / 2, -h / 2, w, h); ctx.restore();
   } else {
-    const iw = c.img.width, ih = c.img.height, P = [];
-    for (let j = 0; j <= GRID; j++) { P.push([]); for (let i = 0; i <= GRID; i++) P[j].push(project(c, i / GRID, j / GRID, warp, t)); }
-    for (let j = 0; j < GRID; j++) for (let i = 0; i < GRID; i++) {
-      const s = (a, b) => [a / GRID * iw, b / GRID * ih];
+    const iw = c.img.width, ih = c.img.height, P = [], G = c.rig ? 18 : GRID, used = cellsUsed(c, G);
+    for (let j = 0; j <= G; j++) { P.push([]); for (let i = 0; i <= G; i++) P[j].push(project(c, i / G, j / G, warp, t)); }
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+      if (!used[j * G + i]) continue;
+      const s = (a, b) => [a / G * iw, b / G * ih];
       tri(c.img, s(i, j), s(i + 1, j), s(i, j + 1), P[j][i], P[j][i + 1], P[j + 1][i]);
       tri(c.img, s(i + 1, j), s(i + 1, j + 1), s(i, j + 1), P[j][i + 1], P[j + 1][i + 1], P[j + 1][i]);
     }
@@ -649,9 +787,11 @@ function frame(now) {
     // shadow
     const [w, h] = size(c);
     ctx.setTransform(base); ctx.fillStyle = "rgba(0,0,0,.16)"; ctx.beginPath(); ctx.ellipse(c.x, c.homeY + h * 0.48, w * 0.4 * Math.abs(c.sx), 12, 0, 0, TAU); ctx.fill();
-    if (ef.draw) ef.draw(c, t); else drawCreature(c, t, ef.warp || null);
+    c.limbs = c.rig && !ef.draw ? limbPose(c, ef.key, t) : null;
+    const warp = c.limbs ? rigWarp : ef.warp || null;
+    if (ef.draw) ef.draw(c, t); else drawCreature(c, t, warp);
     ctx.setTransform(base);
-    if (!ef.draw || ef === EFFECTS.explode && (t % 4.2 < 0.5 || t % 4.2 > 3.4)) drawEyes(c, t, ef.warp || null, dt);
+    if (!ef.draw || ef === EFFECTS.explode && (t % 4.2 < 0.5 || t % 4.2 > 3.4)) drawEyes(c, t, warp, dt);
     if (c === selected && dragging) { ctx.strokeStyle = "rgba(42,42,53,.5)"; ctx.setLineDash([10, 8]); ctx.lineWidth = 3; ctx.strokeRect(c.x - w / 2, c.y - h / 2, w, h); ctx.setLineDash([]); }
   }
   for (let k = particles.length - 1; k >= 0; k--) {
@@ -735,6 +875,56 @@ for (const [k, s] of Object.entries(SCENES)) {
   b.onclick = () => { scene = k; sceneBox.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); SFX.blip(); };
   sceneBox.append(b);
 }
+// ---- giving a drawing arms and legs
+let rigging = null, rigDraft = null, rigDrag = null;
+const DOTS = [["H", "Head", "#8a4fc8"], ["LH", "Hand", "#ef5a3c"], ["RH", "Hand", "#ef5a3c"], ["LF", "Foot", "#3aa0e8"], ["RF", "Foot", "#3aa0e8"]];
+function drawRigCanvas() {
+  const cvr = $("rigCanvas"), g = cvr.getContext("2d"), img = rigging.img;
+  const s = Math.min(1, 900 / Math.max(img.width, img.height)), pad = 40;
+  cvr.width = Math.round(img.width * s) + pad * 2; cvr.height = Math.round(img.height * s) + pad * 2; cvr.dataset.s = s; cvr.dataset.pad = pad;
+  g.drawImage(img, pad, pad, img.width * s, img.height * s);
+  const P = (k) => [pad + rigDraft[k][0] * s, pad + rigDraft[k][1] * s], j = joints(rigDraft, img);
+  const Q = (q) => [pad + q[0] * s, pad + q[1] * s];
+  g.strokeStyle = "rgba(42,42,53,.55)"; g.lineWidth = 5; g.lineCap = "round"; g.setLineDash([]);
+  const line = (a, b) => { g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); };
+  line(Q(j.hip), Q(j.chest)); line(Q(j.chest), P("H")); line(Q(j.chest), P("LH")); line(Q(j.chest), P("RH")); line(Q(j.hip), P("LF")); line(Q(j.hip), P("RF"));
+  g.fillStyle = "#2a2a35"; for (const k of ["la", "ra", "ll", "rl"].concat(j.noHead ? [] : ["head"])) { const [x, y] = Q(j.bones[k][0]); g.beginPath(); g.arc(x, y, 7, 0, TAU); g.fill(); }
+  const R = Math.max(16, cvr.width / 34);
+  g.font = `700 ${Math.round(R * 0.95)}px Andika, sans-serif`; g.textAlign = "center";
+  for (const [k, label, col] of DOTS) {
+    const [x, y] = P(k);
+    g.fillStyle = col; g.strokeStyle = "#fff"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, R, 0, TAU); g.fill(); g.stroke();
+    g.fillStyle = "#2a2a35"; g.fillText(label, x, y - R - 6);
+  }
+}
+function openRig(c) {
+  rigging = c; rigDraft = JSON.parse(JSON.stringify(c.rig || guessRig(c.img)));
+  $("rigNext").hidden = creatures.length < 2;
+  drawRigCanvas(); if (!$("rigDlg").open) $("rigDlg").showModal();
+}
+const rigPoint = (ev) => { const cvr = $("rigCanvas"), r = cvr.getBoundingClientRect(), s = +cvr.dataset.s, pad = +cvr.dataset.pad;
+  return [((ev.clientX - r.left) / r.width * cvr.width - pad) / s, ((ev.clientY - r.top) / r.height * cvr.height - pad) / s]; };
+$("rigCanvas").addEventListener("pointerdown", (ev) => {
+  const p = rigPoint(ev), cvr = $("rigCanvas"), s = +cvr.dataset.s, reach = Math.max(16, cvr.width / 34) * 2 / s;
+  let best = null, bd = reach;
+  for (const [k] of DOTS) { const d = Math.hypot(rigDraft[k][0] - p[0], rigDraft[k][1] - p[1]); if (d < bd) { bd = d; best = k; } }
+  if (best) { rigDrag = best; cvr.setPointerCapture(ev.pointerId); SFX.blip(); }
+});
+$("rigCanvas").addEventListener("pointermove", (ev) => {
+  if (!rigDrag) return;
+  const p = rigPoint(ev), img = rigging.img;
+  rigDraft[rigDrag] = [clamp(p[0], -20, img.width + 20), clamp(p[1], -20, img.height + 20)]; drawRigCanvas();
+});
+$("rigCanvas").addEventListener("pointerup", () => { rigDrag = null; });
+const finishRig = () => { setRig(rigging, rigDraft); rigging.showOff = (performance.now() - t0) / 1000 + 2.5; SFX.boing(); };
+$("rigDone").onclick = () => { finishRig(); $("rigDlg").close(); $("hint").textContent = "Try Wave hello, Star jumps, Head bang, Dance or Go for a walk."; };
+$("rigNext").onclick = () => { finishRig(); openRig(creatures[(creatures.indexOf(rigging) + 1) % creatures.length]); };
+$("rigNone").onclick = () => { setRig(rigging, null); $("rigDlg").close(); };
+$("rigBtn").onclick = () => {
+  if (!creatures.length) return;
+  openRig(selected && creatures.includes(selected) ? selected : creatures.find((c) => !c.rig) || creatures[0]);
+};
+
 $("eyes").onclick = () => {
   eyesMode = !eyesMode; $("eyes").setAttribute("aria-pressed", String(eyesMode));
   $("hint").textContent = eyesMode ? "Tap on a drawing to stick on a googly eye. Tap Googly eyes again when you have finished." : "Drag your drawings around, and tap them to make them jump.";
@@ -808,7 +998,7 @@ $("useIt").onclick = () => {
     list.forEach((sp) => { const c = addCreature(sp, Math.max(0.45, Math.max(sp.width, sp.height) / top)); c.jump = 1; });
     SFX.sparkle();
   }
-  $("cut").close(); $("hint").textContent = "Drag your drawings around, and tap them to make them jump."; };
+  $("cut").close(); $("hint").textContent = "Tap Arms and legs to make them wave, jump and walk properly."; };
 $("file").onchange = async (ev) => {
   const f = ev.target.files && ev.target.files[0]; ev.target.value = "";
   if (!f) return;
