@@ -84,7 +84,7 @@ button:disabled { opacity: .45; cursor: default; }
 
   <div class="frame">
     <canvas id="stage" width="1280" height="720" aria-label="Your drawings, animated"></canvas>
-    <div class="hint" id="hint">Take a photo of a drawing, or choose one from your pictures. Drag your drawings around, and tap them to make them jump.</div>
+    <div class="hint" id="hint">Take a photo of a drawing, or choose one from your pictures. Drag your drawings around, tap them to make them jump, and double-tap to zoom in.</div>
     <div class="rec" id="recBadge" hidden>Recording…</div>
   </div>
 
@@ -100,6 +100,8 @@ button:disabled { opacity: .45; cursor: default; }
     <div class="row">
       <button id="eyes" type="button" aria-pressed="false">Googly eyes</button>
       <button id="record" type="button">Make a video</button>
+      <button id="zoomIn" type="button">Zoom in</button>
+      <button id="zoomOut" type="button">Zoom out</button>
       <button id="remove" type="button">Take one away</button>
     </div>
   </section>
@@ -637,6 +639,8 @@ function frame(now) {
   const t = (now - t0) / 1000, dt = Math.min(0.05, t - lastT); lastT = t;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (shake > 0) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.9; if (shake < 0.5) shake = 0; }
+  moveCamera(dt);
+  ctx.translate(W / 2, H / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.x, -cam.y);
   const base = ctx.getTransform();
   drawScene(t);
   for (const c of creatures) {
@@ -660,9 +664,24 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-// ------------------------------------------------------------------ touching the stage: drag, tap to jump, tap to stick eyes on
-let dragging = false, down = null;
-function stagePoint(ev) { const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H]; }
+// ------------------------------------------------------------------ the camera: zoom in and follow a drawing
+const cam = { x: W / 2, y: H / 2, z: 1 }, camGoal = { x: W / 2, y: H / 2, z: 1, follow: null };
+function moveCamera(dt) {
+  if (camGoal.follow && !creatures.includes(camGoal.follow)) camGoal.follow = null;
+  if (camGoal.follow && !dragging) { camGoal.x = camGoal.follow.x; camGoal.y = camGoal.follow.y; }
+  if (!pinch) { const k = 1 - Math.exp(-dt * 4); cam.x += (camGoal.x - cam.x) * k; cam.y += (camGoal.y - cam.y) * k; cam.z += (camGoal.z - cam.z) * k; }
+  const hx = W / 2 / cam.z, hy = H / 2 / cam.z;                       // never show past the edge of the scene
+  cam.x = clamp(cam.x, hx, W - hx); cam.y = clamp(cam.y, hy, H - hy);
+}
+function zoomOn(c) { camGoal.follow = c; camGoal.z = 2.6; SFX.slide(); $("hint").textContent = "Double-tap the background, or tap Zoom out, to see everyone again."; }
+function zoomOut() { camGoal.follow = null; camGoal.z = 1; camGoal.x = W / 2; camGoal.y = H / 2; }
+
+// ------------------------------------------------------------------ touching the stage: drag, tap to jump, double-tap to zoom, pinch to zoom
+let dragging = false, down = null, pinch = null, lastTap = null;
+const touches = new Map();
+function screenPoint(ev) { const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H]; }
+function toWorld([sx, sy]) { return [cam.x + (sx - W / 2) / cam.z, cam.y + (sy - H / 2) / cam.z]; }
+function stagePoint(ev) { return toWorld(screenPoint(ev)); }
 function hit(x, y) {
   for (let i = creatures.length - 1; i >= 0; i--) {
     const c = creatures[i], [w, h] = size(c), sx = Math.abs(c.sx) || 1, sy = Math.abs(c.sy) || 1;
@@ -673,23 +692,51 @@ function hit(x, y) {
 }
 cv.addEventListener("pointerdown", (ev) => {
   audio();
+  touches.set(ev.pointerId, screenPoint(ev));
+  if (touches.size === 2) {                                            // two fingers: pinch to zoom
+    const [a, b] = [...touches.values()], mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z0: cam.z, anchor: toWorld(mid) };
+    camGoal.follow = null; down = null; dragging = false; return;
+  }
   const [x, y] = stagePoint(ev), h = hit(x, y);
   down = { x, y, time: performance.now(), h };
   if (h) { selected = h[0]; cv.setPointerCapture(ev.pointerId); cv.style.cursor = "grabbing"; }
 });
 cv.addEventListener("pointermove", (ev) => {
+  if (touches.has(ev.pointerId)) touches.set(ev.pointerId, screenPoint(ev));
+  if (pinch && touches.size === 2) {
+    const [a, b] = [...touches.values()], mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    cam.z = camGoal.z = clamp(pinch.z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d0, 1, 5);
+    cam.x = camGoal.x = pinch.anchor[0] - (mid[0] - W / 2) / cam.z; cam.y = camGoal.y = pinch.anchor[1] - (mid[1] - H / 2) / cam.z;
+    return;
+  }
   if (!down || !down.h) return;
   const [x, y] = stagePoint(ev);
   if (!dragging && Math.hypot(x - down.x, y - down.y) > 10) dragging = true;
   if (dragging) { const c = down.h[0]; c.homeX = clamp(c.homeX + x - down.x, 0, W); c.homeY = clamp(c.homeY + y - down.y, 60, H - 40); c.wx = null; down.x = x; down.y = y; }
 });
-cv.addEventListener("pointerup", () => {
-  if (down && down.h && !dragging) {
-    const [c, u, v] = down.h;
-    if (eyesMode) addEye(c, clamp(u, 0, 1), clamp(v, 0, 1)); else { c.jump = 1; SFX.boing(); }
+const lift = (ev) => {
+  touches.delete(ev.pointerId);
+  if (pinch) { if (touches.size < 2) pinch = null; down = null; dragging = false; return; }
+  if (down && !dragging) {
+    const now = performance.now(), c = down.h ? down.h[0] : null;
+    const double = lastTap && now - lastTap.time < 380 && lastTap.c === c;
+    if (c && eyesMode) addEye(c, clamp(down.h[1], 0, 1), clamp(down.h[2], 0, 1));
+    else if (double && c) { camGoal.follow === c ? zoomOut() : zoomOn(c); }
+    else if (double && !c) zoomOut();
+    else if (c) { c.jump = 1; SFX.boing(); }
+    lastTap = double ? null : { time: now, c };
   }
   dragging = false; down = null; cv.style.cursor = "grab";
-});
+};
+cv.addEventListener("pointerup", lift);
+cv.addEventListener("pointercancel", lift);
+cv.addEventListener("wheel", (ev) => {
+  ev.preventDefault();
+  const s = screenPoint(ev), w0 = toWorld(s);
+  cam.z = camGoal.z = clamp(cam.z * Math.exp(-ev.deltaY * 0.0015), 1, 5); camGoal.follow = null;
+  cam.x = camGoal.x = w0[0] - (s[0] - W / 2) / cam.z; cam.y = camGoal.y = w0[1] - (s[1] - H / 2) / cam.z;
+}, { passive: false });
 
 // ------------------------------------------------------------------ buttons
 const effBox = $("effects");
@@ -709,6 +756,13 @@ $("eyes").onclick = () => {
   eyesMode = !eyesMode; $("eyes").setAttribute("aria-pressed", String(eyesMode));
   $("hint").textContent = eyesMode ? "Tap on a drawing to stick on a googly eye. Tap Googly eyes again when you have finished." : "Drag your drawings around, and tap them to make them jump.";
 };
+// each press zooms in on the next drawing
+$("zoomIn").onclick = () => {
+  if (!creatures.length) return;
+  const i = camGoal.follow ? (creatures.indexOf(camGoal.follow) + 1) % creatures.length : Math.max(0, creatures.indexOf(selected));
+  zoomOn(creatures[i]);
+};
+$("zoomOut").onclick = () => { zoomOut(); SFX.blip(); $("hint").textContent = "Double-tap a drawing to zoom in on it."; };
 $("remove").onclick = () => {
   if (!creatures.length) return;
   const c = selected && creatures.includes(selected) ? selected : creatures[creatures.length - 1];
